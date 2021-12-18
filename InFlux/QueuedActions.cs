@@ -4,7 +4,7 @@
     /// Allows you to add code to the queue for execution.
     /// Execution is considered automatic, and in sequence.
     /// </summary>
-    public static class QueuedAction
+    public static class QueuedActions
     {
         private static Queue<Action> queue = new();
 
@@ -17,9 +17,9 @@
         /// </summary>
         public static void Add(Action code)
         {
-            if (busy)
-                queue.Enqueue(code);
-            else
+            queue.Enqueue(code);
+
+            if (!busy) 
                 processQueue();
         }
 
