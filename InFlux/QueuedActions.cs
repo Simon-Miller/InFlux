@@ -1,4 +1,6 @@
-﻿namespace InFlux
+﻿using System.Diagnostics;
+
+namespace InFlux
 {
     /// <summary>
     /// Allows you to add code to the queue for execution.
@@ -15,6 +17,7 @@
         /// therefore to avoid possible unwanted side-effects of adding multiple Actions to the queue,
         /// use the <see cref="AddRange(Action[])"/> method instead.
         /// </summary>
+        [DebuggerStepThrough]
         public static void Add(Action code)
         {
             queue.Enqueue(code);
@@ -27,6 +30,7 @@
         /// Adds any number of Actions to be executes to the queue, and then processes the queue,
         /// if the queue is not already being processed.
         /// </summary>
+        [DebuggerStepThrough]
         public static void AddRange(params Action[] codeCollection)
         {
             foreach(var codeItem in codeCollection)
@@ -35,6 +39,7 @@
             processQueue();
         }
 
+        [DebuggerStepThrough]
         private static void processQueue()
         {
             if (busy) return;
