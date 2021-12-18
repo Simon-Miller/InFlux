@@ -1,4 +1,6 @@
-﻿namespace InFlux
+﻿using System.Diagnostics;
+
+namespace InFlux
 {
     /// <summary>
     /// represents an Event that has no payload data, and the event itself is the message that subscribers will want to hear about.
@@ -70,6 +72,7 @@
         /// Add a subscriber to the collection of listeners.  You are returned a KEY you
         /// may later use to more easily <see cref="UnSubscribe(int)"/> from should you need to.
         /// </summary>
+        [DebuggerStepThrough]
         public int Subscribe(Action<T> code)
         {
             var key = ++NextKey;
@@ -84,6 +87,7 @@
         /// <para>If you no longer have the key, its still possible to unsubscribe by Action using 
         /// <see cref="UnSubscribe(Action)"/> however, that removed all keys that call the same code.</para>
         /// </summary>
+        [DebuggerStepThrough]
         public bool UnSubscribe(int key) => subscribers.Remove(key);
 
         /// <summary>
@@ -92,6 +96,7 @@
         /// be removed from the internal collection of subscriptions.
         /// Ideally, you should avoid using this method, and instead use <see cref="UnSubscribe(int)"/>.
         /// </summary>
+        [DebuggerStepThrough]
         public bool UnSubscribe(Action<T> code)
         {
             bool removed = false;
@@ -108,6 +113,7 @@
         /// <summary>
         /// cause all subscribers to hear about this event. In queued order.
         /// </summary>
+        [DebuggerStepThrough]
         public void FireEvent(T payload) =>
             QueuedActions.AddRange(this.subscribers.Select<KeyValuePair<int, Action<T>>, Action>(x => () => x.Value(payload)).ToArray());
     }

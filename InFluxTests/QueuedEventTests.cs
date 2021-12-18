@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-namespace InFluxTests
+﻿namespace InFluxTests
 {
     [TestClass]
     public class QueuedEventTests
@@ -104,7 +103,7 @@ namespace InFluxTests
 
             // only listener: NOTE - although called during first event handler,
             // the event firing queues the subscribers, so existing queued subscribers will be dealt with first.
-            Assert.IsTrue(Events.List[3] == "News flash! Fire fighters fight fire!"); 
+            Assert.IsTrue(Events.List[3] == "News flash! Fire fighters fight fire!");
         }
 
         class Hotel
@@ -131,6 +130,64 @@ namespace InFluxTests
             public void ReportOnFireBrigade() => Events.List.Add("News flash! Fire fighters fight fire!");
         }
         static class Events
+        {
+            public static readonly List<string> List = new();
+        }
+
+        #endregion
+
+        #region generic version of queued event tests
+
+        [TestMethod]
+        public void Ordering_of_generic_events_is_more_predictable()
+        {
+            // Arrange -- NOTE how similar this is to setup in EventsSuckTests
+            var hotel = new Hotel2();
+            var fireBrigade = new FireBrigade2();
+            var reporter = new Reporter2();
+
+            hotel.KitchenOnFire.Subscribe(N => fireBrigade.PutOutFire(N));
+            hotel.KitchenOnFire.Subscribe(N => reporter.ReportOnHotelFire(N));
+            fireBrigade.PuttingOutAFire.Subscribe(N => reporter.ReportOnFireBrigade(N));
+
+            // Act
+            hotel.StartFire(); // you arsonist!
+
+            // Assert - NOTE: Events should now be fully processed before next 'event' is processed.
+            Assert.IsTrue(Events2.List[0] == "hotel: Someone help! There's a fire!"); // info, not event.   
+            Assert.IsTrue(Events2.List[1] == "fire brigade: On our way! 123"); // first event listener on KitchenOnFire
+            Assert.IsTrue(Events2.List[2] == "News flash! Hotel on fire! 123");// second event listener on KitchenOnFire
+
+            // only listener: NOTE - although called during first event handler,
+            // the event firing queues the subscribers, so existing queued subscribers will be dealt with first.
+            Assert.IsTrue(Events2.List[3] == "News flash! Fire fighters fight fire! 345");
+        }
+
+
+        class Hotel2
+        {
+            public readonly QueuedEvent<int> KitchenOnFire = new();
+            public void StartFire()
+            {
+                Events2.List.Add("hotel: Someone help! There's a fire!");
+                KitchenOnFire.FireEvent(123);
+            }
+        }
+        class FireBrigade2
+        {
+            public readonly QueuedEvent<int> PuttingOutAFire = new();
+            public void PutOutFire(int number)
+            {
+                Events2.List.Add($"fire brigade: On our way! {number}");
+                PuttingOutAFire.FireEvent(345);
+            }
+        }
+        class Reporter2
+        {
+            public void ReportOnHotelFire(int number) => Events2.List.Add($"News flash! Hotel on fire! {number}");
+            public void ReportOnFireBrigade(int number) => Events2.List.Add($"News flash! Fire fighters fight fire! {number}");
+        }
+        static class Events2
         {
             public static readonly List<string> List = new();
         }
