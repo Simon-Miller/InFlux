@@ -1,17 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace InFlux
 {
+    public abstract class QueuedEventPropertyBase
+    {
+        /// <summary>
+        /// allows a QueuedEventsEntity to listen in on children.
+        /// </summary>
+        internal abstract void OnValueChanged(Action code);
+    }
+
     /// <summary>
     /// Represents a property who's value type is <see cref="T"/>.
     /// This property contains an event that is fired when the <see cref="Value"/> of this property changes.
     /// You are free to subscribe to <see cref="ValueChanged"/> which is a queued event.
     /// </summary>
-    public class QueuedEventProperty<T>
+    public class QueuedEventProperty<T> : QueuedEventPropertyBase
     {
         /// <summary>
         /// Define an initial starting value for this property, and behaviour with relation to when
@@ -46,6 +55,11 @@ namespace InFlux
                     this.ValueChanged.FireEvent((currentValue, value));
                 }
             }
+        }
+        
+        internal override void OnValueChanged(Action code)
+        {
+            this.ValueChanged.Subscribe(result => code());
         }
 
         public static implicit operator T (QueuedEventProperty<T> source) => source.Value;
