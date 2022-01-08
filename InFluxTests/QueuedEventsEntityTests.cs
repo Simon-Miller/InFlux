@@ -28,15 +28,8 @@
     /// That means you'd need to define a getter / setter property of your own,
     /// and have the value itself validate but get its value from an event property?
     /// </summary>
-    class Entity : QueuedEventsEntity
+    class Entity : QueuedEventsEntity<Entity>
     {
-        public Entity() : base()
-        {
-            base.EntityChanged.Subscribe(() => this.EntityChanged.FireEvent(this));
-        }
-
-        new public readonly QueuedEvent<Entity> EntityChanged = new();
-
         public readonly QueuedEventProperty<int> Age = new(initialValue: 0, onlyFireOnValueChanges: true);
     }
 }

@@ -7,7 +7,7 @@ namespace InFlux
     /// Automatically signs up to value change events on the inheritor's members
     /// of type <see cref="QueuedEventProperty{T}"/>.
     /// </summary>
-    public abstract class QueuedEventsEntity
+    public abstract class QueuedEventsEntity<T> where T: QueuedEventsEntity<T>
     {      
         public QueuedEventsEntity()
         {
@@ -34,9 +34,9 @@ namespace InFlux
         /// The idea being you create your own strongly typed event where you can pass on your entity
         /// to your subscribers so they know which entity changed.
         /// </summary>
-        protected readonly QueuedEvent EntityChanged = new();
+        public readonly QueuedEvent<T> EntityChanged = new();
 
-        private void onMemberValueChanged() => this.EntityChanged.FireEvent();
+        private void onMemberValueChanged() => this.EntityChanged.FireEvent((T)this);
         
         private void setupMember(object? member)
         {
