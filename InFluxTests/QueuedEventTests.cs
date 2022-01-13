@@ -1,4 +1,5 @@
-﻿namespace InFluxTests
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+namespace InFluxTests
 {
     [TestClass]
     public class QueuedEventTests
@@ -77,6 +78,33 @@
             // Assert
             Assert.AreEqual(1, var1);
             Assert.AreEqual(2, var2);
+        }
+
+        [TestMethod]
+        public void can_subscribe_once()
+        {
+            // Arrange
+            var target1 = new QueuedEvent();
+            var target2 = new QueuedEvent<int>();
+
+            var calls1 = 0;
+            var calls2 = 0;
+            int valueFromEvent = 0;
+
+            target1.SubscribeOnce(() => calls1++);
+            target2.SubscribeOnce(x => { calls2++; valueFromEvent = x; });
+
+            // Act: By triggering event twice we prove by calls1/2 and valueFromEvent, that we heard it only once.
+            target1.FireEvent();
+            target2.FireEvent(123);
+
+            target1.FireEvent();
+            target2.FireEvent(234);
+
+            // Assert
+            Assert.AreEqual(1, calls1);
+            Assert.AreEqual(1, calls2);
+            Assert.AreEqual(123, valueFromEvent);
         }
 
         #region using QueuedEvents gives a more predictable behaviour to events

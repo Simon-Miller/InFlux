@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -7,6 +7,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Description>Common architechtural code for building observable models with predicable event handling</Description>
     <Copyright>(c)2022 Last Byte Sofware Limited</Copyright>
+	  <Version>1.0.3</Version>
   </PropertyGroup>
 
 </Project>

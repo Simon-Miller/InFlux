@@ -12,10 +12,13 @@ namespace InFlux
         private int NextKey = 0;
         private Dictionary<int, Action> subscribers = new();
 
+        private readonly List<Action> oneOffSubscribers = new();
+
         /// <summary>
         /// Add a subscriber to the collection of listeners.  You are returned a KEY you
         /// may later use to more easily <see cref="UnSubscribe(int)"/> from should you need to.
         /// </summary>
+        [DebuggerStepThrough]
         public int Subscribe(Action code)
         {
             var key = ++NextKey;
@@ -30,6 +33,7 @@ namespace InFlux
         /// <para>If you no longer have the key, its still possible to unsubscribe by Action using 
         /// <see cref="UnSubscribe(Action)"/> however, that removed all keys that call the same code.</para>
         /// </summary>
+        [DebuggerStepThrough]
         public bool UnSubscribe(int key) => subscribers.Remove(key);
 
         /// <summary>
@@ -38,6 +42,7 @@ namespace InFlux
         /// be removed from the internal collection of subscriptions.
         /// Ideally, you should avoid using this method, and instead use <see cref="UnSubscribe(int)"/>.
         /// </summary>
+        [DebuggerStepThrough]
         public bool UnSubscribe(Action code)
         {
             bool removed = false;
@@ -54,8 +59,21 @@ namespace InFlux
         /// <summary>
         /// cause all subscribers to hear about this event. In queued order.
         /// </summary>
-        public void FireEvent() =>
+        [DebuggerStepThrough]
+        public void FireEvent()
+        {
             QueuedActions.AddRange(this.subscribers.Select(x => x.Value).ToArray());
+
+            QueuedActions.AddRange(this.oneOffSubscribers.ToArray());
+
+            this.oneOffSubscribers.Clear();
+        }
+
+        [DebuggerStepThrough]
+        public void SubscribeOnce(Action code)
+        {
+            this.oneOffSubscribers.Add(code);
+        }
     }
 
     /// <summary>
@@ -67,6 +85,8 @@ namespace InFlux
     {
         private int NextKey = 0;
         private Dictionary<int, Action<T>> subscribers = new();
+
+        private readonly List<Action<T>> oneOffSubscribers = new();
 
         /// <summary>
         /// Add a subscriber to the collection of listeners.  You are returned a KEY you
@@ -114,7 +134,30 @@ namespace InFlux
         /// cause all subscribers to hear about this event. In queued order.
         /// </summary>
         [DebuggerStepThrough]
-        public void FireEvent(T payload) =>
-            QueuedActions.AddRange(this.subscribers.Select<KeyValuePair<int, Action<T>>, Action>(x => () => x.Value(payload)).ToArray());
+        public void FireEvent(T payload)
+        {
+            QueuedActions.AddRange(
+                this.subscribers.Select<KeyValuePair<int, Action<T>>, Action>(x =>
+                                    () => x.Value(payload))
+                                .ToArray());
+
+            QueuedActions.AddRange(
+                this.oneOffSubscribers.Select<Action<T>, Action>(code =>
+                                    () => code(payload))
+                                .ToArray());
+
+            this.oneOffSubscribers.Clear();
+        }
+
+        /// <summary>
+        /// Subscribe to the event, where after the next time it fires, your code will be automatically
+        /// unsubscribed.  So your code will at most be called once only.
+        /// </summary>
+        /// <param name="code"></param>
+        [DebuggerStepThrough]
+        public void SubscribeOnce(Action<T> code)
+        {
+            this.oneOffSubscribers.Add(code);
+        }
     }
 }
