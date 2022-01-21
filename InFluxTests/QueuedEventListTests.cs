@@ -1,11 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace InFluxTests
+﻿namespace InFluxTests
 {
     [TestClass]
     public class QueuedEventListTests
@@ -14,24 +7,28 @@ namespace InFluxTests
         public void Add_works()
         {
             // Arrange
-            var list = new QueuedEventList<Widget>() 
+            var list = new QueuedEventList<Widget>()
             {
                 new Widget(123) // supports this style of definition because of the Add method signature. 
             };
 
             int calls = 0;
+            int addCalls = 0;
 
-            var subKey = list.ListChanged.Subscribe(x=> calls++);
+            var subKey = list.OnListChanged.Subscribe((O, N) => calls++);
+            var subKey2 = list.OnItemAdded.Subscribe((O, N) => addCalls++);
 
             // Act
             list.Add(new Widget(234));
 
-            list.ListChanged.UnSubscribe(subKey);
+            list.OnListChanged.UnSubscribe(subKey);
+            list.OnItemAdded.UnSubscribe(subKey2);
 
             list.Add(new Widget(345));
 
             // Assert
             Assert.AreEqual(calls, 1);
+            Assert.AreEqual(addCalls, 1);
             Assert.AreEqual(list.Count, 3);
             Assert.AreEqual(list[0], new Widget(123));
             Assert.AreEqual(list[1], new Widget(234));
@@ -51,7 +48,9 @@ namespace InFluxTests
             };
 
             int calls = 0;
-            list.ListChanged.Subscribe(x=> calls++);
+            list.OnListChanged.Subscribe((O, N) => calls++);
+            int removeCalls = 0;
+            list.OnItemRemoved.Subscribe((O,N) => removeCalls++);
 
             // Act
             var initialCount = list.Count;
@@ -61,6 +60,7 @@ namespace InFluxTests
 
             // Assert
             Assert.AreEqual(calls, 2);
+            Assert.AreEqual(removeCalls, 2);
             Assert.AreEqual(initialCount, 2);
             Assert.AreEqual(list.Count, 0);
         }
@@ -69,22 +69,25 @@ namespace InFluxTests
         public void Indexer_works()
         {
             // Arrange
-            var list = new QueuedEventList<Widget>() 
-            { 
+            var list = new QueuedEventList<Widget>()
+            {
                 new Widget(0),
                 new Widget(3),
                 new Widget(2)
             };
 
             var calls = 0;
-            list.ListChanged.Subscribe(x=>calls++);
+            list.OnListChanged.Subscribe((O, N) => calls++);
+            var indexerCalls = 0;
+            list.OnItemChanged.Subscribe((O,N)=> indexerCalls++);   
 
             // Act
-            var oldItem = list[1];
+            var oldItem = list[1]!;
             list[1] = oldItem with { Value = 1 };
 
             // Assert
             Assert.AreEqual(calls, 1);
+            Assert.AreEqual(indexerCalls,1);
             Assert.AreEqual(list[0], new Widget(0));
             Assert.AreEqual(list[1], new Widget(1));
             Assert.AreEqual(list[2], new Widget(2));
@@ -96,17 +99,20 @@ namespace InFluxTests
             // Arrange
             var list = new QueuedEventList<Widget>();
             var calls = 0;
-            list.ListChanged.Subscribe(x=> calls++);
+            list.OnListChanged.Subscribe((O, N) => calls++);
+            var rangeCalls = 0;
+            list.OnItemAdded.Subscribe((O,N) => rangeCalls++);
 
             // Act
-            list.AddRange(new Widget[] 
+            list.AddRange(new Widget[]
             {
                 new Widget(1),
                 new Widget(2)
             });
 
             // Assert
-            Assert.AreEqual(1, calls);
+            Assert.AreEqual(2, calls);
+            Assert.AreEqual(2, rangeCalls);
             Assert.AreEqual(2, list.Count);
             Assert.AreEqual(new Widget(1), list[0]);
             Assert.AreEqual(new Widget(2), list[1]);

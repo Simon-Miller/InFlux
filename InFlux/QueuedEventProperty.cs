@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace InFlux
+﻿namespace InFlux
 {
+    public delegate void ValueChangedResponse(object? oldValue, object? newValue);
+    public delegate void ValueChangedResponse<T>(T? oldValue, T? newValue);
+
     public abstract class QueuedEventPropertyBase
     {
         /// <summary>
         /// allows a QueuedEventsEntity to listen in on children.
         /// </summary>
-        internal abstract void OnValueChanged(Action code);
+        internal abstract void OnValueChanged(ValueChangedResponse code);
     }
 
     /// <summary>
@@ -35,7 +31,7 @@ namespace InFlux
 
         private readonly bool onlyFireOnValueChanges;
 
-        public readonly QueuedEvent<(T oldValue,T newValue)> ValueChanged = new();
+        public readonly QueuedEvent<T> ValueChanged = new();
 
         private T value;
 
@@ -43,25 +39,25 @@ namespace InFlux
         /// setter of this property causes <see cref="ValueChanged"/> to fire based on your
         /// configuration in the constructor.
         /// </summary>
-        public T Value 
+        public T Value
         {
             get => value;
             set
             {
                 var currentValue = this.value;
-                if(onlyFireOnValueChanges == false || object.Equals(currentValue, value) == false)
+                if (onlyFireOnValueChanges == false || object.Equals(currentValue, value) == false)
                 {
                     this.value = value;
-                    this.ValueChanged.FireEvent((currentValue, value));
+                    this.ValueChanged.FireEvent(currentValue, value);
                 }
             }
         }
-        
-        internal override void OnValueChanged(Action code)
+
+        internal override void OnValueChanged(ValueChangedResponse code)
         {
-            this.ValueChanged.Subscribe(result => code());
+            this.ValueChanged.Subscribe((O, N) => code(O, N));
         }
 
-        public static implicit operator T (QueuedEventProperty<T> source) => source.Value;
+        public static implicit operator T(QueuedEventProperty<T> source) => source.Value;
     }
 }

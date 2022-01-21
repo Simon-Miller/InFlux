@@ -84,16 +84,16 @@ namespace InFlux
     public class QueuedEvent<T>
     {
         private int NextKey = 0;
-        private Dictionary<int, Action<T>> subscribers = new();
+        private Dictionary<int, ValueChangedResponse<T>> subscribers = new();
 
-        private readonly List<Action<T>> oneOffSubscribers = new();
+        private readonly List<ValueChangedResponse<T>> oneOffSubscribers = new();
 
         /// <summary>
         /// Add a subscriber to the collection of listeners.  You are returned a KEY you
         /// may later use to more easily <see cref="UnSubscribe(int)"/> from should you need to.
         /// </summary>
         [DebuggerStepThrough]
-        public int Subscribe(Action<T> code)
+        public int Subscribe(ValueChangedResponse<T> code)
         {
             var key = ++NextKey;
             subscribers.Add(key, code);
@@ -117,7 +117,7 @@ namespace InFlux
         /// Ideally, you should avoid using this method, and instead use <see cref="UnSubscribe(int)"/>.
         /// </summary>
         [DebuggerStepThrough]
-        public bool UnSubscribe(Action<T> code)
+        public bool UnSubscribe(ValueChangedResponse<T> code)
         {
             bool removed = false;
             var removables = this.subscribers.Where(x => x.Value == code).ToArray();
@@ -134,16 +134,16 @@ namespace InFlux
         /// cause all subscribers to hear about this event. In queued order.
         /// </summary>
         [DebuggerStepThrough]
-        public void FireEvent(T payload)
+        public void FireEvent(T? oldValue, T? newValue)
         {
             QueuedActions.AddRange(
-                this.subscribers.Select<KeyValuePair<int, Action<T>>, Action>(x =>
-                                    () => x.Value(payload))
+                this.subscribers.Select<KeyValuePair<int, ValueChangedResponse<T>>, Action>(x =>
+                                    () => x.Value(oldValue, newValue))
                                 .ToArray());
 
             QueuedActions.AddRange(
-                this.oneOffSubscribers.Select<Action<T>, Action>(code =>
-                                    () => code(payload))
+                this.oneOffSubscribers.Select<ValueChangedResponse<T>, Action>(code =>
+                                    () => code(oldValue, newValue))
                                 .ToArray());
 
             this.oneOffSubscribers.Clear();
@@ -155,7 +155,7 @@ namespace InFlux
         /// </summary>
         /// <param name="code"></param>
         [DebuggerStepThrough]
-        public void SubscribeOnce(Action<T> code)
+        public void SubscribeOnce(ValueChangedResponse<T> code)
         {
             this.oneOffSubscribers.Add(code);
         }

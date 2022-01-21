@@ -92,14 +92,14 @@ namespace InFluxTests
             int valueFromEvent = 0;
 
             target1.SubscribeOnce(() => calls1++);
-            target2.SubscribeOnce(x => { calls2++; valueFromEvent = x; });
+            target2.SubscribeOnce((O, N) => { calls2++; valueFromEvent = N; });
 
             // Act: By triggering event twice we prove by calls1/2 and valueFromEvent, that we heard it only once.
             target1.FireEvent();
-            target2.FireEvent(123);
+            target2.FireEvent(0, 123);
 
             target1.FireEvent();
-            target2.FireEvent(234);
+            target2.FireEvent(123,234);
 
             // Assert
             Assert.AreEqual(1, calls1);
@@ -174,9 +174,9 @@ namespace InFluxTests
             var fireBrigade = new FireBrigade2();
             var reporter = new Reporter2();
 
-            hotel.KitchenOnFire.Subscribe(N => fireBrigade.PutOutFire(N));
-            hotel.KitchenOnFire.Subscribe(N => reporter.ReportOnHotelFire(N));
-            fireBrigade.PuttingOutAFire.Subscribe(N => reporter.ReportOnFireBrigade(N));
+            hotel.KitchenOnFire.Subscribe((O, N) => fireBrigade.PutOutFire(N));
+            hotel.KitchenOnFire.Subscribe((O, N) => reporter.ReportOnHotelFire(N));
+            fireBrigade.PuttingOutAFire.Subscribe((O, N) => reporter.ReportOnFireBrigade(N));
 
             // Act
             hotel.StartFire(); // you arsonist!
@@ -198,7 +198,7 @@ namespace InFluxTests
             public void StartFire()
             {
                 Events2.List.Add("hotel: Someone help! There's a fire!");
-                KitchenOnFire.FireEvent(123);
+                KitchenOnFire.FireEvent(0, 123);
             }
         }
         class FireBrigade2
@@ -207,7 +207,7 @@ namespace InFluxTests
             public void PutOutFire(int number)
             {
                 Events2.List.Add($"fire brigade: On our way! {number}");
-                PuttingOutAFire.FireEvent(345);
+                PuttingOutAFire.FireEvent(0, 345);
             }
         }
         class Reporter2

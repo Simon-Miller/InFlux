@@ -11,7 +11,7 @@
 
             int calledCount = 0;
 
-            inst.EntityChanged.Subscribe(e => calledCount++);
+            inst.EntityChanged.Subscribe((O, N) => calledCount++);
 
             // act
             inst.Age.Value = 103;

@@ -36,12 +36,14 @@ namespace InFlux
         /// </summary>
         public readonly QueuedEvent<T> EntityChanged = new();
 
-        private void onMemberValueChanged() => this.EntityChanged.FireEvent((T)this);
+        //something isn't right here.  or setupMember is wrong too.
+        private void onMemberValueChanged(object? oldValue, object? newValue) => this.EntityChanged.FireEvent(default, (T?)this);
         
         private void setupMember(object? member)
         {
             if (member != null)
-                ((QueuedEventPropertyBase)member).OnValueChanged(() => this.onMemberValueChanged());           
+                ((QueuedEventPropertyBase)member).OnValueChanged((oldValue,newValue) => 
+                    this.onMemberValueChanged(oldValue, newValue));           
         }    
     }
 }

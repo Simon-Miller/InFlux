@@ -6,7 +6,7 @@
 #if RELEASE
         [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
 #endif
-        [TestMethod]
+        //[TestMethod]
         public void Ordering_of_events_not_as_expected()
         {
             // Arrange

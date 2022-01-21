@@ -18,9 +18,9 @@
             var oldValue = 0;
             var newValue = 10;
 
-            var key = target.Age.ValueChanged.Subscribe(x => 
+            var key = target.Age.ValueChanged.Subscribe((O, N) => 
             {
-                if (x.oldValue != oldValue || x.newValue != newValue)
+                if (O != oldValue || N != newValue)
                     throw new ArgumentException();
                 calls++;
             });
