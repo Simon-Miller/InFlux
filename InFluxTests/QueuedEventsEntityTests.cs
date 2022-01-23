@@ -15,9 +15,10 @@
 
             // act
             inst.Age.Value = 103;
+            inst.ItemCodes.Add(123);
 
             // assert
-            Assert.AreEqual(1,calledCount);
+            Assert.AreEqual(2,calledCount);
         }
     }
 
@@ -31,5 +32,7 @@
     class Entity : QueuedEventsEntity<Entity>
     {
         public readonly QueuedEventProperty<int> Age = new(initialValue: 0, onlyFireOnValueChanges: true);
+
+        public readonly QueuedEventList<int> ItemCodes = new();
     }
 }
