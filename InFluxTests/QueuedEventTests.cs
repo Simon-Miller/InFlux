@@ -107,6 +107,25 @@ namespace InFluxTests
             Assert.AreEqual(123, valueFromEvent);
         }
 
+        [TestMethod]
+        public void PrioritySubscribe_works()
+        {
+            // Arrange
+            var target = new QueuedEvent<int>();
+            var called = new List<int>();
+
+            target.Subscribe((O, N) => called.Add(1));
+            target.PrioritySubscribe((O, N) => called.Add(2)); // NOTE: This should appear first in called list
+
+            // Act
+            target.FireEvent(0, 123); // we don't care about this value, just the order of events firing.
+
+            // Assert
+            Assert.AreEqual(2, called.Count);
+            Assert.AreEqual(2, called[0]); // proves the priority subscription is at front of cal queue.
+            Assert.AreEqual(1, called[1]); // proves first subscription was forced into 2nd place.
+        }
+
         #region using QueuedEvents gives a more predictable behaviour to events
 
         [TestMethod]

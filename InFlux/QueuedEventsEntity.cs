@@ -14,16 +14,19 @@ namespace InFlux
         public QueuedEventsEntity()
         {
             // scan self for members inheriting QueuedEventPropertyBase;
+
+            // NOTE commented out NonPublic, as backing-fields get picked up as well as public properties.
+
             var genericFieldMembers = this.GetType()
                     .GetFields(BindingFlags.Public
-                             | BindingFlags.NonPublic 
+                             //| BindingFlags.NonPublic 
                              | BindingFlags.Instance)
                     .Where(x => x.FieldType.IsGenericType)
                     .ToList();
 
-            var genericPropertyMembers = this.GetType()
+            var genericPropertyMembers = this.GetType()                    
                     .GetProperties(BindingFlags.Public 
-                                 | BindingFlags.NonPublic 
+                                 //| BindingFlags.NonPublic 
                                  | BindingFlags.Instance)
                     .Where(x => x.PropertyType.IsGenericType)
                     .ToList();
@@ -33,16 +36,17 @@ namespace InFlux
                 .Each(member => this.setupMember(member.GetValue(this)));
 
             genericPropertyMembers.Where(p => p
+                .PropertyType.IsNestedAssembly && p
                 .PropertyType.IsAssignableTo(typeof(QueuedEventPropertyBase)))
-                .Each(member => this.setupMember(member.GetValue(this)));
+                    .Each(member => this.setupMember(member.GetValue(this)));
 
             genericFieldMembers
                 .Where(f => f.FieldType.GetGenericTypeDefinition() == typeof(QueuedEventList<>))
                 .Each(member => this.setupListMember(member.GetValue(this)));
 
-            genericPropertyMembers
-                .Where(p => p.PropertyType.GetGenericTypeDefinition() == typeof(QueuedEventList<>))
-                .Each(member => this.setupListMember(member.GetValue(this)));
+            genericPropertyMembers.Where(p =>p
+                .PropertyType.GetGenericTypeDefinition() == typeof(QueuedEventList<>))
+                    .Each(member => this.setupListMember(member.GetValue(this)));
         }
 
         /// <summary>

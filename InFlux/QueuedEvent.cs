@@ -28,6 +28,27 @@ namespace InFlux
         }
 
         /// <summary>
+        /// Add a subscriber to the collection but ensure its (currently) first in the queued to be called.
+        /// This pushes ahead of all other subscriptions.  Very specialised case!  Otherwise don't use this!
+        /// You are returned a KEY you may later use to more easily <see cref="UnSubscribe(int)"/> from 
+        /// should you need to.
+        /// </summary>
+        [DebuggerStepThrough]
+        public int PrioritySubscribe(Action code)
+        {
+            var key = ++NextKey;
+            var currentDictionaryValues = this.subscribers;
+
+            // jiggle dictionary so new code is first item in collection.
+            this.subscribers = new();
+            this.subscribers.Add(key, code);
+            foreach (var oldKey in currentDictionaryValues.Keys)
+                this.subscribers.Add(oldKey, currentDictionaryValues[oldKey]);
+
+            return key;
+        }
+
+        /// <summary>
         /// The quick method of unscubscribing from an event which means you need to provide the KEY
         /// you would have been given when you originally subscribed.
         /// <para>If you no longer have the key, its still possible to unsubscribe by Action using 
@@ -97,6 +118,27 @@ namespace InFlux
         {
             var key = ++NextKey;
             subscribers.Add(key, code);
+
+            return key;
+        }
+
+        /// <summary>
+        /// Add a subscriber to the collection but ensure its (currently) first in the queued to be called.
+        /// This pushes ahead of all other subscriptions.  Very specialised case!  Otherwise don't use this!
+        /// You are returned a KEY you may later use to more easily <see cref="UnSubscribe(int)"/> from 
+        /// should you need to.
+        /// </summary>
+        [DebuggerStepThrough]
+        public int PrioritySubscribe(ValueChangedResponse<T> code)
+        {
+            var key = ++NextKey;
+            var currentDictionaryValues = this.subscribers;
+
+            // jiggle dictionary so new code is first item in collection.
+            this.subscribers = new();
+            this.subscribers.Add(key, code);
+            foreach(var oldKey in currentDictionaryValues.Keys)
+                this.subscribers.Add(oldKey, currentDictionaryValues[oldKey]);
 
             return key;
         }

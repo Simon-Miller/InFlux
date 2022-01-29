@@ -16,9 +16,10 @@
             // act
             inst.Age.Value = 103;
             inst.ItemCodes.Add(123);
+            inst.ListOfBools.Add(true);
 
             // assert
-            Assert.AreEqual(2,calledCount);
+            Assert.AreEqual(3,calledCount);
         }
     }
 
@@ -34,5 +35,8 @@
         public readonly QueuedEventProperty<int> Age = new(initialValue: 0, onlyFireOnValueChanges: true);
 
         public readonly QueuedEventList<int> ItemCodes = new();
+
+        // this matches what I've done in real app.
+        public QueuedEventList<bool> ListOfBools { get; init; } = new();
     }
 }
