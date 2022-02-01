@@ -31,6 +31,11 @@ namespace InFlux
 
         private readonly List<T?> list = new();
 
+        // NOTE: There's no events for these, because you can track when an item is added, removed, etc already.
+        public int AddedCount { get; private set; } = 0;
+        public int RemovedCount { get; private set; } = 0;
+        public int ChangedCount { get; private set; } = 0;
+
         /// <summary>
         /// Subscribe or unsubscribe from this event to be informed of any changes to this list,
         /// including Adds, Removes, and Updates to entries in this list.
@@ -110,6 +115,7 @@ namespace InFlux
         public void Add(T? item)
         {
             this.list.Add(item);
+            this.AddedCount++;
             this.OnItemAdded.FireEvent(default, item);
         }
 
@@ -124,11 +130,22 @@ namespace InFlux
         }
 
         /// <summary>
+        /// Clear the counts of CUD operations. (Created (added), Updated, Deleted (removed))
+        /// </summary>
+        public void ClearCounts()
+        {
+            this.AddedCount = 0;
+            this.RemovedCount = 0;
+            this.ChangedCount = 0;
+        }
+
+        /// <summary>
         ///  Removes the first occurrence of a specific object from the <see cref="QueuedEventList{T}"/>.
         /// </summary>
         public bool Remove(T? item)
         {
             var result = this.list.Remove(item);
+            this.RemovedCount++;
             this.OnItemRemoved.FireEvent(item, default);
 
             return result;
@@ -141,6 +158,7 @@ namespace InFlux
         {
             var oldItem = this.list[index];
             this.list[index] = item;
+            this.AddedCount++;
             this.OnItemChanged.FireEvent(oldItem, item);
         }
 
@@ -151,6 +169,7 @@ namespace InFlux
         {
             var oldItem = this.list[index];
             this.list.RemoveAt(index);
+            this.RemovedCount++;
             this.OnItemRemoved.FireEvent(oldItem, default);
         }
 
@@ -164,6 +183,7 @@ namespace InFlux
             {
                 var oldItem = this.list[index];
                 this.list[index] = value;
+                this.ChangedCount++;
                 this.OnItemChanged.FireEvent(oldItem, value);
             }
         }
