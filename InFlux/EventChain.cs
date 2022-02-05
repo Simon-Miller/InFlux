@@ -1,18 +1,6 @@
 ﻿namespace InFlux
 {
 
-    public class ChainLink<T>
-    {
-        internal ChainLink(T payload, Action callbackWhenDone)
-        {
-            this.payload = payload;
-            this.callbackWhenDone = callbackWhenDone;
-        }
-
-        public readonly T payload;
-        public readonly Action callbackWhenDone;
-    }
-
     /// <summary>
     /// Frustrating as it is, neither traditional events, or QueuedEvents offer solid knowledge to the 
     /// developer of the order that events are handled in, or in the case of QueuedEvents, whether
@@ -27,9 +15,9 @@
     /// </summary>
     public class EventChain<T>
     {
-        int subId = 0;
-        Dictionary<int, Action<ChainLink<T>>> subscriptions = new();
-        List<Action<ChainLink<T>>> oneOffSubscriptions = new();
+        private int subId = 0;
+        private Dictionary<int, Action<ChainLink<T>>> subscriptions = new();
+        private List<Action<ChainLink<T>>> oneOffSubscriptions = new();
 
         public int Subscribe(Action<ChainLink<T>> callback)
         {
@@ -99,8 +87,8 @@
             this.DebugSubscriptions.Clear();
             var nextDebugId = 1;
 
-            var iterableSubscriptions = this.copySubscriptions();
-            foreach (var subscription in iterableSubscriptions)
+            var actionsForQueue = new List<Action>(this.subscriptions.Count);
+            foreach (var subscription in this.subscriptions)
             {
                 ChainLink<T> subscriberCallback = generatePayloadForSubscriber(nextDebugId);
                 var debugRow = new DebugSubscription(nextDebugId, false, 
@@ -109,11 +97,16 @@
                 this.DebugSubscriptions.Add(debugRow);
                 nextDebugId++;
 
-                QueuedActions.Add(() => subscription.Value.Invoke(subscriberCallback));
+                actionsForQueue.Add(() => subscription.Value.Invoke(subscriberCallback));
             }
 
-            var iterableOneOffSubscriptions = this.copyOneOffSubscriptions();
-            foreach (var subscription in iterableOneOffSubscriptions)
+            // by adding all at once, we don't give the queue a chance to start processing the first
+            // item, and thereby call something that wants to queue up actions, which would break
+            // the naturally perceived chronological order.
+            QueuedActions.AddRange(actionsForQueue);
+
+            actionsForQueue.Clear();
+            foreach (var subscription in this.oneOffSubscriptions)
             {
                 ChainLink<T> subscriberCallback = generatePayloadForSubscriber(nextDebugId);
                 var debugRow = new DebugSubscription(nextDebugId, true,
@@ -122,9 +115,9 @@
                 this.DebugSubscriptions.Add(debugRow);
                 nextDebugId++;
 
-                QueuedActions.Add(() => subscription.Invoke(subscriberCallback));
+                actionsForQueue.Add(() => subscription.Invoke(subscriberCallback));
             }
-
+            QueuedActions.AddRange(actionsForQueue);
             this.oneOffSubscriptions.Clear();
 
             ChainLink<T> generatePayloadForSubscriber(int debugId) => 

@@ -39,6 +39,19 @@ namespace InFlux
             processQueue();
         }
 
+        /// <summary>
+        /// Adds any number of Actions to be executes to the queue, and then processes the queue,
+        /// if the queue is not already being processed.
+        /// </summary>
+        [DebuggerStepThrough]
+        public static void AddRange(IEnumerable<Action> codeCollection)
+        {
+            foreach (var codeItem in codeCollection)
+                queue.Enqueue(codeItem);
+
+            processQueue();
+        }
+
         [DebuggerStepThrough]
         private static void processQueue()
         {

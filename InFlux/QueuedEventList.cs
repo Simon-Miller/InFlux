@@ -31,6 +31,8 @@ namespace InFlux
 
         private readonly List<T?> list = new();
 
+        // TODO: REMOVE THIS FEATURE - you should use ChainEventList instead.
+
         // NOTE: There's no events for these, because you can track when an item is added, removed, etc already.
         public int AddedCount { get; private set; } = 0;
         public int RemovedCount { get; private set; } = 0;
