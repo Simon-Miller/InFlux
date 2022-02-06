@@ -1,5 +1,4 @@
-﻿using InFlux.Extensions;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace InFlux
 {

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-
-namespace InFlux
+﻿namespace InFlux
 {
     /// <summary>
     /// Acts as a list that will inform you when an item is added, removed, or replaced within this list.

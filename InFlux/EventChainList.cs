@@ -1,7 +1,4 @@
-﻿using InFlux.Extensions;
-using System.Collections;
-
-namespace InFlux
+﻿namespace InFlux
 {
     /// <summary>
     /// Like a <see cref="List{T}"/> but with events relating to state changes.
@@ -59,6 +56,7 @@ namespace InFlux
             #endregion
 
             setupChain(this.OnItemAdded, chain => (default(T?).AsList(), chain.payload.AsList()));
+            setupChain(this.OnRangeAdded, chain => chain.payload);
             setupChain(this.OnItemRemoved, chain => (chain.payload.AsList(), default(T).AsList()));
             setupChain(this.OnItemChanged, chain => (chain.payload.oldValue.AsList(), chain.payload.newValue.AsList()));
             setupChain(this.OnListCleared, chain => chain.payload);
@@ -73,10 +71,7 @@ namespace InFlux
 
                     // this should fire AFTER the callback, so you hear about 'on something completed'
                     // BEFORE hearing about this list has changed!!
-                    this.OnListChanged.FireEvent(mapToPayload(chain), () => 
-                    {
-                        this.OnListChangedEventCompleted.FireEvent();
-                    });
+                    this.OnListChanged.FireEvent(mapToPayload(chain), null);
                 });
             }
 
@@ -92,21 +87,23 @@ namespace InFlux
         /// or: <seealso cref=".UnSubscribe(Action{ValueChangedResponse{IEnumerable{T}})"/>
         /// </summary>
         public readonly EventChain<(IEnumerable<T?> oldValues, IEnumerable<T?> newValues)> OnListChanged = new();
-        public readonly QueuedEvent OnListChangedEventCompleted = new();
 
         /// <summary>
         /// informs you about any added items to this <see cref="EventChainList{T}"/>.
         /// Also fires <see cref="OnListChanged"/> event.
         /// </summary>
         public readonly EventChain<T?> OnItemAdded = new();
-        public readonly QueuedEvent OnItemAddedEventCompleted = new();
+
+        /// <summary>
+        /// informs you about a range of items added this <see cref="EventChainList{T}"/> 
+        /// </summary>
+        public readonly EventChain<(IEnumerable<T?> oldValues, IEnumerable<T?> newValues)> OnRangeAdded = new();
 
         /// <summary>
         /// informs you about any removed items from this <see cref="EventChainList{T}"/>.
         /// Also fires <see cref="OnListChanged"/> event.
         /// </summary>
         public readonly EventChain<T?> OnItemRemoved = new();
-        public readonly QueuedEvent OnItemRemovedEventCompleted = new();
 
         /// <summary>
         /// informs you about any items at a given index being swapped (changed) for a different item
@@ -114,14 +111,12 @@ namespace InFlux
         /// Also fires <see cref="OnListChanged"/> event.
         /// </summary>
         public readonly EventChain<(T? oldValue, T? newValue)> OnItemChanged = new();
-        public readonly QueuedEvent OnItemChangedEventCompleted = new();
 
         /// <summary>
         /// informs you if this <see cref="EventChainList{T}"/> has all items removed, specifically
         /// to clear the list.  Also fires <see cref="OnListChanged"/> event.
         /// </summary>
         public readonly EventChain<(IEnumerable<T?> oldValues, IEnumerable<T?> newValues)> OnListCleared = new();
-        public readonly QueuedEvent OnListClearedEventCompleted = new();
 
         /// <summary>
         /// Gets the number of elements contained in the <see cref="EventChainList{T}"/>.
@@ -169,10 +164,7 @@ namespace InFlux
         public void Add(T? item)
         {
             this.list.Add(item);
-            this.OnItemAdded.FireEvent(item, () => 
-            {
-                this.OnItemAddedEventCompleted.FireEvent();
-            });
+            this.OnItemAdded.FireEvent(item, null);
         }
 
         /// <summary>
@@ -182,10 +174,7 @@ namespace InFlux
         {
             var currentList = this.list.ToList();
             this.list.Clear();
-            this.OnListCleared.FireEvent((currentList, this.list), () => 
-            {
-                this.OnListClearedEventCompleted.FireEvent();
-            });
+            this.OnListCleared.FireEvent((currentList, this.list), null);
         }
 
         /// <summary>
@@ -194,10 +183,7 @@ namespace InFlux
         public bool Remove(T? item)
         {
             var result = this.list.Remove(item);
-            this.OnItemRemoved.FireEvent(item, () => 
-            {
-                this.OnItemRemovedEventCompleted.FireEvent();
-            });
+            this.OnItemRemoved.FireEvent(item, null);
 
             return result;
         }
@@ -209,10 +195,7 @@ namespace InFlux
         {
             var oldItem = this.list[index];
             this.list[index] = item;
-            this.OnItemChanged.FireEvent((oldItem, item), () => 
-            {
-                this.OnItemChangedEventCompleted.FireEvent();
-            });
+            this.OnItemChanged.FireEvent((oldItem, item), null);
         }
 
         /// <summary>
@@ -222,10 +205,7 @@ namespace InFlux
         {
             var oldItem = this.list[index];
             this.list.RemoveAt(index);
-            this.OnItemRemoved.FireEvent(oldItem, () => 
-            {
-                this.OnItemRemovedEventCompleted.FireEvent();
-            });
+            this.OnItemRemoved.FireEvent(oldItem, null);
         }
 
         /// <summary>
@@ -238,22 +218,20 @@ namespace InFlux
             {
                 var oldItem = this.list[index];
                 this.list[index] = value;
-                this.OnItemChanged.FireEvent((oldItem, value), () => 
-                {
-                    this.OnItemChangedEventCompleted.FireEvent();
-                });
+                this.OnItemChanged.FireEvent((oldItem, value), null);
             }
         }
 
         /// <summary>
         /// Adds each item in the provided collection to this collection.
+        /// <para>Fires the <see cref="OnListChanged"/> event, and when complete, 
+        /// the <see cref="OnRangeAddedEventCompleted"/> event too.</para>
         /// </summary>
-        /// <param name="collection"></param>
         public void AddRange(IEnumerable<T?> collection)
         {
-            foreach (T? item in collection)
-                this.Add(item);     // each item trigger event.  But that's informative,
-                                    // otherwise we'd need an event for the range of values added.
+            this.list.AddRange(collection);
+
+            this.OnRangeAdded.FireEvent((default(T?).AsList(), collection), null);
         }
     }
 }

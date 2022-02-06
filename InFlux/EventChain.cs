@@ -1,6 +1,5 @@
 ﻿namespace InFlux
 {
-
     /// <summary>
     /// Frustrating as it is, neither traditional events, or QueuedEvents offer solid knowledge to the 
     /// developer of the order that events are handled in, or in the case of QueuedEvents, whether
@@ -18,6 +17,11 @@
         private int subId = 0;
         private Dictionary<int, Action<ChainLink<T>>> subscriptions = new();
         private List<Action<ChainLink<T>>> oneOffSubscriptions = new();
+
+        /// <summary>
+        /// called when the <see cref="FireEvent(T, Action)"/> method has completed the chain.
+        /// </summary>
+        public readonly QueuedEvent OnEventCompleted = new();
 
         public int Subscribe(Action<ChainLink<T>> callback)
         {
@@ -69,18 +73,26 @@
             return copy;
         }
         public record class DebugSubscription(int Id, bool IsOneOff, Action callSubscription);
-        public readonly List<DebugSubscription> DebugSubscriptions = new(); 
-        // TODO: POPULATE THIS ABOVE LIST.
+        public readonly List<DebugSubscription> DebugSubscriptions = new();
+        // POPULATE THIS ABOVE LIST (DebugSubscriptions).
         // I was thinking that with all subscriptions we generate an index as we fire the event
         // we generate a DebugSubscription and add to the collection.  As the respond,
         // we know their ID, and can remove them from the list.
 
-        public void FireEvent(T payload, Action callbackWhenDone)
+        /// <summary>
+        /// Processes subscriptions and one-off subscriptions, and generate debug inforation.
+        /// Handle chain of events, and only call back the <paramref name="callbackWhenDone"/> action,
+        /// when all subscribers each and all callback THIS method.
+        /// <para>NOTE: I made the Action nullable because there are times you don't need to hear about it,
+        /// but I still think you should explicity (hence, not an optional property) say so.
+        /// If you want an event without the callbacks, try using a <see cref="QueuedEvent"/> instead.</para>
+        /// </summary>
+        public void FireEvent(T payload, Action? callbackWhenDone)
         {
             var subscriptionsCount = this.subscriptions.Count + this.oneOffSubscriptions.Count;
             if (subscriptionsCount <= 0)
             {
-                callbackWhenDone();
+                callbackWhenDone?.Invoke();
                 return;
             }
 
@@ -129,7 +141,10 @@
                 subscriptionsCount--;
 
                 if (subscriptionsCount <= 0)
-                    callbackWhenDone();
+                {
+                    callbackWhenDone?.Invoke();
+                    this.OnEventCompleted.FireEvent();
+                }
             }
         }
     }
