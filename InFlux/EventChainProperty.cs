@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace InFlux
+﻿namespace InFlux
 {
     /// <summary>
     /// Gives you a really flexible and reliable property, where changes
@@ -12,6 +10,12 @@ namespace InFlux
     /// </summary>
     public class EventChainProperty<T>
     {
+        /// <summary>
+        /// Initialise an instance with a given starting value (or default), and optionally
+        /// specify the kind of event firing behaviour that's right for you, otherwise defaults
+        /// to only firing events when it determines the incoming value is different from the
+        /// existing value.
+        /// </summary>
         public EventChainProperty(T? startValue = default, bool onlyFireOnValueChanges = true)
         {
             this.value = (startValue is not null) ? startValue : default!;
@@ -20,6 +24,11 @@ namespace InFlux
         private readonly bool onlyFireOnValueChanges;
         private T value;
 
+        /// <summary>
+        /// Event you can subscrib to where any incoming value change matches the event behaviour,
+        /// will call your provided code in response.  Given this is an event chain, you may also
+        /// be interested in the internal <see cref="EventChain{T}.OnEventCompleted"/> event.
+        /// </summary>
         public readonly EventChain<(T oldValue, T newValue)> ValueChanged = new();
 
         /// <summary>

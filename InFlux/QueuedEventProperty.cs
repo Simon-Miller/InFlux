@@ -3,14 +3,6 @@
     public delegate void ValueChangedResponse(object? oldValue, object? newValue);
     public delegate void ValueChangedResponse<T>(T? oldValue, T? newValue);
 
-    public abstract class QueuedEventPropertyBase
-    {
-        /// <summary>
-        /// allows a QueuedEventsEntity to listen in on children.
-        /// </summary>
-        internal abstract void OnValueChanged(ValueChangedResponse code);
-    }
-
     /// <summary>
     /// Represents a property who's value type is <see cref="T"/>.
     /// This property contains an event that is fired when the <see cref="Value"/> of this property changes.
@@ -31,6 +23,10 @@
 
         private readonly bool onlyFireOnValueChanges;
 
+        /// <summary>
+        /// When ever <see cref="Value"/> is set, and conforms to expected event behaviour,
+        /// this event fires in a predicatable queued fashion.
+        /// </summary>
         public readonly QueuedEvent<T> ValueChanged = new();
 
         private T value;
@@ -53,10 +49,10 @@
             }
         }
 
-        internal override void OnValueChanged(ValueChangedResponse code)
-        {
+        // used internally for auto-wire-up.
+        internal override void OnValueChanged(ValueChangedResponse code) =>
             this.ValueChanged.Subscribe((O, N) => code(O, N));
-        }
+
 
         public static implicit operator T(QueuedEventProperty<T> source) => source.Value;
     }

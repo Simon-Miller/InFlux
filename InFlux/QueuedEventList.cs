@@ -9,9 +9,13 @@
     /// </summary>
     public class QueuedEventList<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, IList<T?>, IReadOnlyCollection<T?>, IReadOnlyList<T?>
     {
+        /// <summary>
+        /// Sets up code that listens for actions that alter this collection, so after those events fire,
+        /// it leads to a more generic <see cref="OnListChanged"/> event firing automatically.
+        /// </summary>
         public QueuedEventList()
         {
-            #region listen to all changes, and fire the more general ListChanged event in response
+            // listen to all changes, and fire the more general ListChanged event in response
 
             this.OnItemAdded.Subscribe((O, N) => 
                 this.OnListChanged.FireEvent(new List<T?> { O }, new List<T?> { N }));
@@ -23,18 +27,9 @@
                 this.OnListChanged.FireEvent(new List<T?> { O }, new List<T?> { N }));
 
             this.OnListCleared.Subscribe((O, N) => this.OnListChanged.FireEvent(O, N));
-
-            #endregion
         }
 
         private readonly List<T?> list = new();
-
-        // TODO: REMOVE THIS FEATURE - you should use ChainEventList instead.
-
-        // NOTE: There's no events for these, because you can track when an item is added, removed, etc already.
-        public int AddedCount { get; private set; } = 0;
-        public int RemovedCount { get; private set; } = 0;
-        public int ChangedCount { get; private set; } = 0;
 
         /// <summary>
         /// Subscribe or unsubscribe from this event to be informed of any changes to this list,
@@ -115,7 +110,6 @@
         public void Add(T? item)
         {
             this.list.Add(item);
-            this.AddedCount++;
             this.OnItemAdded.FireEvent(default, item);
         }
 
@@ -130,22 +124,11 @@
         }
 
         /// <summary>
-        /// Clear the counts of CUD operations. (Created (added), Updated, Deleted (removed))
-        /// </summary>
-        public void ClearCounts()
-        {
-            this.AddedCount = 0;
-            this.RemovedCount = 0;
-            this.ChangedCount = 0;
-        }
-
-        /// <summary>
         ///  Removes the first occurrence of a specific object from the <see cref="QueuedEventList{T}"/>.
         /// </summary>
         public bool Remove(T? item)
         {
             var result = this.list.Remove(item);
-            this.RemovedCount++;
             this.OnItemRemoved.FireEvent(item, default);
 
             return result;
@@ -158,7 +141,6 @@
         {
             var oldItem = this.list[index];
             this.list[index] = item;
-            this.AddedCount++;
             this.OnItemChanged.FireEvent(oldItem, item);
         }
 
@@ -169,7 +151,6 @@
         {
             var oldItem = this.list[index];
             this.list.RemoveAt(index);
-            this.RemovedCount++;
             this.OnItemRemoved.FireEvent(oldItem, default);
         }
 
@@ -183,7 +164,6 @@
             {
                 var oldItem = this.list[index];
                 this.list[index] = value;
-                this.ChangedCount++;
                 this.OnItemChanged.FireEvent(oldItem, value);
             }
         }

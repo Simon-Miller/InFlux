@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace InFlux
+﻿namespace InFlux
 {
     /// <summary>
     /// represents an Event that has no payload data, and the event itself is the message that subscribers will want to hear about.
@@ -90,6 +88,10 @@ namespace InFlux
             this.oneOffSubscribers.Clear();
         }
 
+        /// <summary>
+        /// Subscribe to the event, where after the next time it fires, your code will be automatically
+        /// unsubscribed.  So your code will at most be called once only.
+        /// </summary>
         [DebuggerStepThrough]
         public void SubscribeOnce(Action code)
         {
@@ -137,7 +139,7 @@ namespace InFlux
             // jiggle dictionary so new code is first item in collection.
             this.subscribers = new();
             this.subscribers.Add(key, code);
-            foreach(var oldKey in currentDictionaryValues.Keys)
+            foreach (var oldKey in currentDictionaryValues.Keys)
                 this.subscribers.Add(oldKey, currentDictionaryValues[oldKey]);
 
             return key;
@@ -195,7 +197,6 @@ namespace InFlux
         /// Subscribe to the event, where after the next time it fires, your code will be automatically
         /// unsubscribed.  So your code will at most be called once only.
         /// </summary>
-        /// <param name="code"></param>
         [DebuggerStepThrough]
         public void SubscribeOnce(ValueChangedResponse<T> code)
         {

@@ -13,9 +13,5 @@
 
             return items;
         }
-
-        public static IEnumerable<T?> ToNullableEnumerable<T>(this IEnumerable<T> items) => 
-            items.Select(x => x);
-        
     }
 }

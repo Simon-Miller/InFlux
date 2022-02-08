@@ -4,9 +4,11 @@ namespace InFlux
 {
     /// <summary>
     /// represents an entity that shouts about member values changing.
-    /// Automatically signs up to value change events on the inheritor's members
+    /// Automatically signs up value change events on the inheritor's members
     /// of type <see cref="QueuedEventProperty{T}"/>,
-    /// and type <see cref="QueuedEventList{T}"/>
+    /// type <see cref="QueuedEventList{T}"/>,
+    /// type <see cref="EventChainProperty{T}"/>,
+    /// and type <see cref="EventChainList{T}"/>
     /// </summary>
     public abstract class EventsEntityBase<T> where T : EventsEntityBase<T>
     {
@@ -111,24 +113,6 @@ namespace InFlux
             commonSetupEventChainOrPropMember(member,
                                               () => typeof(EventChainList<>),
                                               nameof(setupEventChainListMemberGeneric));
-        //if (member != null)
-        //{
-        //    var memberType = member.GetType();
-        //    var genericArg = memberType.GetGenericArguments()[0];
-
-        //    var thisGenArgType = this.GetType()?.BaseType?.GenericTypeArguments[0];
-
-        //    var thisFUllType = typeof(EventChain<>).MakeGenericType(thisGenArgType!);
-
-        //    var invoker = thisFUllType!.GetMethod(
-        //                     nameof(setupEventChainMemberGeneric),
-        //                     BindingFlags.Instance | BindingFlags.NonPublic);
-
-        //    var genericInvoker = invoker!.MakeGenericMethod(genericArg);
-
-        //    genericInvoker.Invoke(this, new object[] { member });
-        //}
-
 
         private void commonSetupEventChainOrPropMember(object? member, Func<Type> getEventChainOrPropGenericType, string nameOfGenericSetupMethod)
         {
@@ -138,8 +122,6 @@ namespace InFlux
                 var genericArg = memberType.GetGenericArguments()[0];
 
                 var thisGenArgType = this.GetType()?.BaseType?.GenericTypeArguments[0];
-
-                //var thisFUllType = getEventChainOrPropGenericType().MakeGenericType(thisGenArgType!);
 
                 var invoker = this.GetType()?.BaseType?.GetMethod(
                                  nameOfGenericSetupMethod,

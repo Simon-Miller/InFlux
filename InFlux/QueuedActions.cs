@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace InFlux
+﻿namespace InFlux
 {
     /// <summary>
     /// Allows you to add code to the queue for execution.
@@ -22,7 +20,7 @@ namespace InFlux
         {
             queue.Enqueue(code);
 
-            if (!busy) 
+            if (!busy)
                 processQueue();
         }
 
@@ -33,9 +31,9 @@ namespace InFlux
         [DebuggerStepThrough]
         public static void AddRange(params Action[] codeCollection)
         {
-            foreach(var codeItem in codeCollection)
+            foreach (var codeItem in codeCollection)
                 queue.Enqueue(codeItem);
-            
+
             processQueue();
         }
 

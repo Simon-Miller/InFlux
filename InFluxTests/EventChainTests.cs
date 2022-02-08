@@ -51,7 +51,7 @@
 
             inst1.Event.FireEvent(432, () => outerCalls++);
 
-            inst2.Event.Unsubscribe(subKey);
+            inst2.Event.UnSubscribe(subKey);
             inst1.Event.FireEvent(543, () => outerCalls++);
 
             // Assert

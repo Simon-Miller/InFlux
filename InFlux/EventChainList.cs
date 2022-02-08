@@ -7,53 +7,13 @@
     /// </summary>
     public class EventChainList<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, IList<T?>, IReadOnlyCollection<T?>, IReadOnlyList<T?>
     {
+        /// <summary>
+        /// Sets up code that listens for actions that alter this collection, so after those events fire,
+        /// it leads to a more generic <see cref="OnListChanged"/> event firing automatically.
+        /// </summary>
         public EventChainList()
         {
-            #region listen to all changes, and fire the more general ListChanged event in response
-
-            #region OLD CODE
-
-            #region first setup code, no refactoring.
-
-            //this.OnItemAdded.Subscribe(chain =>
-            //{
-            //    chain.callbackWhenDone(); // don't want to hold-up the OnItemAdded chain.
-
-            //    // this should fire AFTER the callback, so you won't hear about OnItemAddedCompleted
-            //    // before hearing about the list change!!
-            //    this.OnListChanged.FireEvent((new List<T?> { default }, new List<T?> { chain.payload }), () => { });
-            //});
-
-            #endregion
-            #region 1st refactor uses AsList()
-
-            //this.OnItemRemoved.Subscribe(chain =>
-            //{
-            //    chain.callbackWhenDone();
-            //    this.OnListChanged.FireEvent((chain.payload.AsList(), default(T).AsList()), () => { });
-            //});
-
-            //this.OnItemChanged.Subscribe(chain => 
-            //{
-            //    chain.callbackWhenDone();
-            //    this.OnListChanged.FireEvent(
-            //        payload: (chain.payload.oldValue.AsList(), chain.payload.newValue.AsList()), 
-            //        callbackWhenDone: () => { }
-            //    );
-            //});
-
-            #endregion
-            #region at this point, I'm thinking about the common code, and how to reduce it
-            //this.OnListCleared.Subscribe(chain =>
-            //{
-            //    chain.callbackWhenDone();
-            //    this.OnListChanged.FireEvent(
-            //        payload:chain.payload, 
-            //        callbackWhenDone: () => { });
-            //});
-            #endregion
-
-            #endregion
+            // listen to all changes, and fire the more general ListChanged event in response
 
             setupChain(this.OnItemAdded, chain => (default(T?).AsList(), chain.payload.AsList()));
             setupChain(this.OnRangeAdded, chain => chain.payload);
@@ -74,8 +34,6 @@
                     this.OnListChanged.FireEvent(mapToPayload(chain), null);
                 });
             }
-
-            #endregion
         }
 
         private readonly List<T?> list = new();
@@ -159,8 +117,9 @@
         public int IndexOf(T? item) => this.list.IndexOf(item);
 
         /// <summary>
-        /// Adds an object to the end of the <see cref="EventChainList{T}"/>.
+        /// Adds an object to the end of the list.
         /// </summary>
+        [DebuggerStepThrough]
         public void Add(T? item)
         {
             this.list.Add(item);
@@ -168,8 +127,9 @@
         }
 
         /// <summary>
-        /// Removes all elements from the <see cref="EventChainList{T}"/>.
+        /// Removes all elements from the list.
         /// </summary>
+        [DebuggerStepThrough]
         public void Clear()
         {
             var currentList = this.list.ToList();
@@ -178,8 +138,9 @@
         }
 
         /// <summary>
-        ///  Removes the first occurrence of a specific object from the <see cref="EventChainList{T}"/>.
+        ///  Removes the first occurrence of a specific object from the list.
         /// </summary>
+        [DebuggerStepThrough]
         public bool Remove(T? item)
         {
             var result = this.list.Remove(item);
@@ -189,8 +150,9 @@
         }
 
         /// <summary>
-        /// Inserts an element into the <see cref="EventChainList{T}"/> at the specified index.
+        /// Inserts an element into the list at the specified index.
         /// </summary>
+        [DebuggerStepThrough]
         public void Insert(int index, T? item)
         {
             var oldItem = this.list[index];
@@ -199,8 +161,9 @@
         }
 
         /// <summary>
-        /// Removes the element at the specified index of the <see cref="EventChainList{T}"/>.
+        /// Removes the element at the specified index of this list.
         /// </summary>
+        [DebuggerStepThrough]
         public void RemoveAt(int index)
         {
             var oldItem = this.list[index];
@@ -223,10 +186,10 @@
         }
 
         /// <summary>
-        /// Adds each item in the provided collection to this collection.
-        /// <para>Fires the <see cref="OnListChanged"/> event, and when complete, 
-        /// the <see cref="OnRangeAddedEventCompleted"/> event too.</para>
+        /// Adds each item in the provided collection to this list.
+        /// <para>Fires <see cref="OnRangeAdded"/> when done.</para>
         /// </summary>
+        [DebuggerStepThrough]
         public void AddRange(IEnumerable<T?> collection)
         {
             this.list.AddRange(collection);
