@@ -12,6 +12,10 @@
             var oneOff = 0;
             var inst1 = new testClass();
             var inst2 = new testClass();
+
+            bool beforeEventFired = false;
+            bool afterEventFired = false;
+
             inst1.Event.Subscribe(cl =>
             {
                 inst2.Event.FireEvent(123, () =>
@@ -29,6 +33,8 @@
                 oneOff++;
                 cb.callbackWhenDone();
             });
+            inst1.Event.OnBeforeEvent.SubscribeOnce(()=> beforeEventFired = true);
+            inst1.Event.OnEventCompleted.SubscribeOnce(()=> afterEventFired = true);
 
             // Act
 
@@ -58,6 +64,8 @@
             Assert.AreEqual(3, outerCalls);
             Assert.AreEqual(2, innerCalls);
             Assert.AreEqual(1, oneOff);
+            Assert.IsTrue(beforeEventFired);
+            Assert.IsTrue(afterEventFired);
         }
     }
 
