@@ -5,9 +5,30 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Description>Common architechtural code for building observable models with predicable event handling</Description>
+    <Description>Common architechtural code for building observable models with predictable event handling. 
+Auto-setup of known property and field types so a generalised 'entity changed' event fires too.
+One-off subscriptions, and callbacks for completed events are supported.</Description>
     <Copyright>(c)2022 Last Byte Sofware Limited</Copyright>
 	  <Version>1.1.0</Version>
+	  <Authors>SimonMiller</Authors>
+	  <Company>LastByteSoftware@Outlook.com</Company>
+	  <PackageProjectUrl>https://github.com/Simon-Miller/InFlux</PackageProjectUrl>
+	  <PackageIcon>icon.png</PackageIcon>
+	  <RepositoryUrl>https://github.com/Simon-Miller/InFlux</RepositoryUrl>
+	  <RepositoryType>git</RepositoryType>
+	  <PackageTags>event;view;model;delegate;callback;entity;reactive;responsive</PackageTags>
+	  <PackageReleaseNotes>Initial release</PackageReleaseNotes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="InFlux icon.cdr" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
