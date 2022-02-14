@@ -1,4 +1,5 @@
-﻿namespace InFluxTests
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+namespace InFluxTests
 {
     [TestClass]
     public class EventChainListTests
@@ -188,6 +189,46 @@
             Assert.AreEqual(2, common.listChangeEventCompleteCalls);
             Assert.AreEqual(1, listClearedCalls);
             Assert.AreEqual(1, listClearedEventCompleteCalls);
+        }
+
+        [TestMethod]
+        public void can_suppress_events_temporarily()
+        {
+            // Arrange
+            var list = new EventChainList<int>();
+            var calls = 0;
+
+            list.OnListChanged.Subscribe(chain => { calls++; chain.callbackWhenDone(); });
+
+            // Act
+            list.Add(1); // should fire call.
+            var countBeforeSuppression = calls;
+
+            list.SuppressEvents.Value = true;
+            list.Add(2); // suppress event.
+            var countAfterSuppression = calls;
+
+            list.SuppressEvents.Value = false;
+            list.Add(3);// should fire call.
+
+            // None of these actions should affect the 'calls' variable.            
+            list.SuppressEvents.Value = true;
+            
+            list[1] = 123;
+            list.Add(321);
+            list.AddRange(new[] { 5, 6, 7 });
+            list.Insert(index:2, item:765);
+            list.Remove(321);
+            list.RemoveAt(1);
+
+            var countBeforeClear = list.Count;
+            list.Clear();
+
+            // Assert
+            Assert.AreEqual(2, calls);
+            Assert.AreEqual(5, countBeforeClear);
+            Assert.AreEqual(1, countBeforeSuppression);
+            Assert.AreEqual(1, countAfterSuppression);
         }
     }
 }

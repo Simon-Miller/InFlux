@@ -39,6 +39,14 @@
         private readonly List<T?> list = new();
 
         /// <summary>
+        /// By default we fire events whenever a change is detected.
+        /// There may be times when you want to switch off this behaviour (temporarily?)
+        /// In which case you can set this to TRUE.  When you are ready for normal behaviour,
+        /// you can set this back to FALSE, and any new changes will fire their events once more.
+        /// </summary>
+        public readonly EventChainProperty<bool> SuppressEvents = new();
+
+        /// <summary>
         /// Subscribe or unsubscribe from this event to be informed of any changes to this list,
         /// including Adds, Removes, and Updates to entries in this list.
         /// Call either: <seealso cref=".Subscribe(ValueChangedResponse{IEnumerable{T}})"/>
@@ -116,6 +124,15 @@
         /// </summary>
         public int IndexOf(T? item) => this.list.IndexOf(item);
 
+        [DebuggerStepThrough]
+        protected void SuppressEventsCheck(Action fireEventsCode)
+        {
+            if(this.SuppressEvents.Value == false)
+            {
+                fireEventsCode();
+            }
+        }
+
         /// <summary>
         /// Adds an object to the end of the list.
         /// </summary>
@@ -123,7 +140,7 @@
         public void Add(T? item)
         {
             this.list.Add(item);
-            this.OnItemAdded.FireEvent(item, null);
+            this.SuppressEventsCheck(()=> this.OnItemAdded.FireEvent(item, null));
         }
 
         /// <summary>
@@ -134,7 +151,7 @@
         {
             var currentList = this.list.ToList();
             this.list.Clear();
-            this.OnListCleared.FireEvent((currentList, this.list), null);
+            this.SuppressEventsCheck(() => this.OnListCleared.FireEvent((currentList, this.list), null));
         }
 
         /// <summary>
@@ -144,7 +161,7 @@
         public bool Remove(T? item)
         {
             var result = this.list.Remove(item);
-            this.OnItemRemoved.FireEvent(item, null);
+            this.SuppressEventsCheck(() => this.OnItemRemoved.FireEvent(item, null));
 
             return result;
         }
@@ -157,7 +174,7 @@
         {
             var oldItem = this.list[index];
             this.list[index] = item;
-            this.OnItemChanged.FireEvent((oldItem, item), null);
+            this.SuppressEventsCheck(() => this.OnItemChanged.FireEvent((oldItem, item), null));
         }
 
         /// <summary>
@@ -168,7 +185,7 @@
         {
             var oldItem = this.list[index];
             this.list.RemoveAt(index);
-            this.OnItemRemoved.FireEvent(oldItem, null);
+            this.SuppressEventsCheck(() => this.OnItemRemoved.FireEvent(oldItem, null));
         }
 
         /// <summary>
@@ -181,7 +198,7 @@
             {
                 var oldItem = this.list[index];
                 this.list[index] = value;
-                this.OnItemChanged.FireEvent((oldItem, value), null);
+                this.SuppressEventsCheck(() => this.OnItemChanged.FireEvent((oldItem, value), null));
             }
         }
 
@@ -194,7 +211,7 @@
         {
             this.list.AddRange(collection);
 
-            this.OnRangeAdded.FireEvent((default(T?).AsList(), collection), null);
+            this.SuppressEventsCheck(() => this.OnRangeAdded.FireEvent((default(T?).AsList(), collection), null));
         }
     }
 }
