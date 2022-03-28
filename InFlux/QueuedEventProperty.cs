@@ -15,7 +15,8 @@
         /// events are fired.  Often it is preferable to only fire the <see cref="ValueChanged"/> event
         /// when the new value differs from the current value.
         /// </summary>
-        public QueuedEventProperty(T initialValue, bool onlyFireOnValueChanges = false)
+        public QueuedEventProperty(T initialValue, bool onlyFireOnValueChanges = false) 
+            : base()
         {
             this.value = initialValue;
             this.onlyFireOnValueChanges = onlyFireOnValueChanges;
@@ -45,6 +46,7 @@
                 {
                     this.value = value;
                     this.ValueChanged.FireEvent(currentValue, value);
+                    base.ValueChangedNotification.FireEvent();
                 }
             }
         }

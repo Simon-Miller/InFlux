@@ -1,4 +1,5 @@
-﻿namespace InFluxTests
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+namespace InFluxTests
 {
     [TestClass]
     public class QueuedEventPropertyTests
@@ -37,6 +38,22 @@
             // Assert
             Assert.IsTrue(target.Age == 20); // casting works?
             Assert.AreEqual(1, calls); // would be 2 if subscription was still active.
+        }
+
+        [TestMethod]
+        public void notifies_property_change()
+        {
+            // Arrange
+            var target = new test();
+            int notified = 0;
+
+            target.Age.ValueChangedNotification.Subscribe(() => notified++);
+
+            // Act
+            target.Age.Value = 123;
+
+            // Assert
+            Assert.AreEqual(1, notified);
         }
     }
 }
