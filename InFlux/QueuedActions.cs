@@ -6,7 +6,11 @@
     /// </summary>
     public static class QueuedActions
     {
-        private static Queue<Action> queue = new();
+        private static Queue<WeakReference<Action>> queue = new();
+
+#if DEBUG
+        public static Queue<WeakReference<Action>> QueueInstance => queue;
+#endif
 
         private static bool busy = false;
 
@@ -18,7 +22,7 @@
         [DebuggerStepThrough]
         public static void Add(Action code)
         {
-            queue.Enqueue(code);
+            queue.Enqueue(new WeakReference<Action>(code));
 
             if (!busy)
                 processQueue();
@@ -32,7 +36,7 @@
         public static void AddRange(params Action[] codeCollection)
         {
             foreach (var codeItem in codeCollection)
-                queue.Enqueue(codeItem);
+                queue.Enqueue(new WeakReference<Action>(codeItem));
 
             processQueue();
         }
@@ -45,7 +49,7 @@
         public static void AddRange(IEnumerable<Action> codeCollection)
         {
             foreach (var codeItem in codeCollection)
-                queue.Enqueue(codeItem);
+                queue.Enqueue(new WeakReference<Action>(codeItem));
 
             processQueue();
         }
@@ -60,7 +64,8 @@
             // given that 'action' can call the Add or AddRange methods, the queue may have grown.
             while (queue.TryDequeue(out var action))
             {
-                action();
+                if(action?.TryGetTarget(out Action? code) ?? false)
+                    code?.Invoke();
             }
 
             busy = false;

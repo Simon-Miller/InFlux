@@ -1,3 +1,4 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace InFluxTests
 {
     [TestClass]
@@ -33,6 +34,26 @@ namespace InFluxTests
             Assert.AreEqual(2, code1.CallCount);
             Assert.AreEqual(2, code2.CallCount);
         }
+
+        [TestMethod]
+        public void weakly_refenced_event_means_disposal_possible_and_no_unsubscribe_necessary()
+        {
+            // Arrange
+            var eventSource = new ThingFiringEvent();
+            var counter = 0;
+            var listener = new ThingToDispose(eventSource, ()=> counter++);
+
+            // Act
+            eventSource.Increment();
+
+            listener = null; // free up for garbage collection
+
+            GC.Collect();
+
+            eventSource.Increment(); // second time means counter could be 2, but with disposed weak link, it shoudl remain 1.
+
+            Assert.AreEqual(1, counter);
+        }
     }
 
     class ActionWrap
@@ -51,4 +72,23 @@ namespace InFluxTests
             this.CallCount++;
         }
     }
+
+    #region helpers for weak reference test
+
+    class ThingFiringEvent
+    {
+        public QueuedEventProperty<int> Counter = new(initialValue: 0);
+
+        public void Increment() => this.Counter.Value++;
+    }
+
+    class ThingToDispose
+    {
+        public ThingToDispose(ThingFiringEvent thingToListenTo, Action counterUpdatedCallback)
+        {
+            thingToListenTo.Counter.ValueChanged.Subscribe((O, N) => counterUpdatedCallback());
+        }
+    }
+
+    #endregion
 }

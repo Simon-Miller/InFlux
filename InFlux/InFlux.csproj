@@ -9,7 +9,6 @@
 Auto-setup of known property and field types so a generalised 'entity changed' event fires too.
 One-off subscriptions, and callbacks for completed events are supported.</Description>
     <Copyright>(c)2022 Last Byte Sofware Limited</Copyright>
-	  <Version>1.1.5</Version>
 	  <Authors>SimonMiller</Authors>
 	  <Company>LastByteSoftware@Outlook.com</Company>
 	  <PackageProjectUrl>https://github.com/Simon-Miller/InFlux</PackageProjectUrl>
@@ -18,6 +17,9 @@ One-off subscriptions, and callbacks for completed events are supported.</Descri
 	  <RepositoryType>git</RepositoryType>
 	  <PackageTags>event;view;model;delegate;callback;entity;reactive;responsive</PackageTags>
 	  <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
+	  <AssemblyVersion>1.1.6</AssemblyVersion>
+	  <Version>$(AssemblyVersion)</Version>
   </PropertyGroup>
 
   <ItemGroup>

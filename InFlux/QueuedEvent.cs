@@ -107,9 +107,9 @@
     public class QueuedEvent<T>
     {
         private int NextKey = 0;
-        private Dictionary<int, ValueChangedResponse<T>> subscribers = new();
+        private Dictionary<int, WeakReference<ValueChangedResponse<T>>> subscribers = new();
 
-        private readonly List<ValueChangedResponse<T>> oneOffSubscribers = new();
+        private readonly List<WeakReference<ValueChangedResponse<T>>> oneOffSubscribers = new();
 
         /// <summary>
         /// Add a subscriber to the collection of listeners.  You are returned a KEY you
@@ -119,7 +119,7 @@
         public int Subscribe(ValueChangedResponse<T> code)
         {
             var key = ++NextKey;
-            subscribers.Add(key, code);
+            subscribers.Add(key, new WeakReference<ValueChangedResponse<T>>(code));
 
             return key;
         }
@@ -138,7 +138,7 @@
 
             // jiggle dictionary so new code is first item in collection.
             this.subscribers = new();
-            this.subscribers.Add(key, code);
+            this.subscribers.Add(key, new WeakReference<ValueChangedResponse<T>>(code));
             foreach (var oldKey in currentDictionaryValues.Keys)
                 this.subscribers.Add(oldKey, currentDictionaryValues[oldKey]);
 
@@ -149,7 +149,7 @@
         /// The quick method of unscubscribing from an event which means you need to provide the KEY
         /// you would have been given when you originally subscribed.
         /// <para>If you no longer have the key, its still possible to unsubscribe by Action using 
-        /// <see cref="UnSubscribe(Action)"/> however, that removed all keys that call the same code.</para>
+        /// <see cref="UnSubscribe(ValueChangedResponse{T})"/> however, that removed all keys that call the same code.</para>
         /// </summary>
         [DebuggerStepThrough]
         public bool UnSubscribe(int key) => subscribers.Remove(key);
@@ -164,7 +164,15 @@
         public bool UnSubscribe(ValueChangedResponse<T> code)
         {
             bool removed = false;
-            var removables = this.subscribers.Where(x => x.Value == code).ToArray();
+            var removables = this.subscribers.Where(x => 
+            {
+                if (x.Value.TryGetTarget(out ValueChangedResponse<T>? registration)) 
+                    return registration == code; 
+ 
+                return false; 
+
+            }).ToArray();
+
             foreach (var removeable in removables)
             {
                 this.subscribers.Remove(removeable.Key);
@@ -180,16 +188,44 @@
         [DebuggerStepThrough]
         public void FireEvent(T? oldValue, T? newValue)
         {
-            QueuedActions.AddRange(
-                this.subscribers.Select<KeyValuePair<int, ValueChangedResponse<T>>, Action>(x =>
-                                    () => x.Value(oldValue, newValue))
-                                .ToArray());
+            var deadSubscribers = new List<int>();
 
             QueuedActions.AddRange(
-                this.oneOffSubscribers.Select<ValueChangedResponse<T>, Action>(code =>
-                                    () => code(oldValue, newValue))
-                                .ToArray());
+                this.subscribers.Select<KeyValuePair<int, WeakReference<ValueChangedResponse<T>>>, Action>(kvp =>
+                {
+                    // filter the kvp: is there still something to call on the other side of the weak reference?
+                    if (kvp.Value.TryGetTarget(out var sub))
+                    {
+                        if (sub != null)
+                            return () => sub(oldValue, newValue);
+                    }
 
+                    deadSubscribers.Add(kvp.Key);
+
+                    return () => { }; // do nothing.  Will fire once, but not next time as subscription will be removed.
+
+                }).ToArray());
+
+            // cleanup subscribers
+            foreach (var deadSubscriber in deadSubscribers)
+                this.subscribers.Remove(deadSubscriber);
+
+
+            QueuedActions.AddRange(
+                this.oneOffSubscribers.Select<WeakReference<ValueChangedResponse<T>>, Action>(weakSub =>
+                { 
+                    // filter the kvp: is there still something to call on the other side of the weak reference?
+                    if (weakSub.TryGetTarget(out var sub))
+                    {
+                        if (sub != null)
+                            return () => sub(oldValue, newValue);
+                    }
+
+                    return () => { }; // do nothing.  Will get cleared anyway.
+
+                }).ToArray());
+
+            // clear one-offs, 
             this.oneOffSubscribers.Clear();
         }
 
@@ -198,9 +234,7 @@
         /// unsubscribed.  So your code will at most be called once only.
         /// </summary>
         [DebuggerStepThrough]
-        public void SubscribeOnce(ValueChangedResponse<T> code)
-        {
-            this.oneOffSubscribers.Add(code);
-        }
+        public void SubscribeOnce(ValueChangedResponse<T> code) =>
+            this.oneOffSubscribers.Add(new WeakReference<ValueChangedResponse<T>>(code));        
     }
 }
