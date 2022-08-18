@@ -9,6 +9,9 @@
         private static Queue<WeakReference<Action>> queue = new();
 
 #if DEBUG
+        /// <summary>
+        /// exposes the internal queue in a debug build, and to be used for debugging purposes only.
+        /// </summary>
         public static Queue<WeakReference<Action>> QueueInstance => queue;
 #endif
 
@@ -35,6 +38,8 @@
         [DebuggerStepThrough]
         public static void AddRange(params Action[] codeCollection)
         {
+            // adding them as weak reference makes a lot of sense - as we've no idea how long we'll need to
+            // hold the reference before we get to call the code.
             foreach (var codeItem in codeCollection)
                 queue.Enqueue(new WeakReference<Action>(codeItem));
 
@@ -48,6 +53,8 @@
         [DebuggerStepThrough]
         public static void AddRange(IEnumerable<Action> codeCollection)
         {
+            // adding them as weak reference makes a lot of sense - as we've no idea how long we'll need to
+            // hold the reference before we get to call the code.
             foreach (var codeItem in codeCollection)
                 queue.Enqueue(new WeakReference<Action>(codeItem));
 
@@ -63,11 +70,9 @@
 
             // given that 'action' can call the Add or AddRange methods, the queue may have grown.
             while (queue.TryDequeue(out var action))
-            {
                 if(action?.TryGetTarget(out Action? code) ?? false)
                     code?.Invoke();
-            }
-
+            
             busy = false;
         }
     }

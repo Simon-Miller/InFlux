@@ -12,7 +12,11 @@ namespace InFlux
     /// </summary>
     public abstract class EventsEntityBase<T> where T : EventsEntityBase<T>
     {
-        public EventsEntityBase()
+        /// <summary>
+        /// Auto-subscribes to any known event or event property,
+        /// and calls the the <see cref="EntityChanged"/> event.
+        /// </summary>
+        protected EventsEntityBase()
         {
             // scan self for members inheriting QueuedEventPropertyBase;
 
@@ -72,10 +76,15 @@ namespace InFlux
         public readonly QueuedEvent<T> EntityChanged = new();
 
         //something isn't right here.  or setupMember is wrong too.
-        private void onMemberValueChanged(object? oldValue, object? newValue) => this.EntityChanged.FireEvent(default, (T?)this);
+        private void onMemberValueChanged(object? oldValue, object? newValue) => 
+            this.EntityChanged.FireEvent(default, (T?)this);
 
         private void setupMember(object? member)
         {
+#if DEBUG
+            Debug.WriteLine($"{nameof(EventsEntityBase<T>)}:{member}: reflection subscribe to OnValueChanged -> onMemberValueChanged");
+#endif
+
             if (member != null)
                 ((QueuedEventPropertyBase)member).OnValueChanged((oldValue, newValue) =>
                     this.onMemberValueChanged(oldValue, newValue));
@@ -121,7 +130,7 @@ namespace InFlux
                 var memberType = member.GetType();
                 var genericArg = memberType.GetGenericArguments()[0];
 
-                var thisGenArgType = this.GetType()?.BaseType?.GenericTypeArguments[0];
+                //var thisGenArgType = this.GetType()?.BaseType?.GenericTypeArguments[0];
 
                 var invoker = this.GetType()?.BaseType?.GetMethod(
                                  nameOfGenericSetupMethod,

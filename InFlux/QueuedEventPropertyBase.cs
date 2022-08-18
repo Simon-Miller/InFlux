@@ -1,5 +1,8 @@
 ﻿namespace InFlux
 {
+    /// <summary>
+    /// provides the basic event notification of a value changing, without you knowing (or caring?) about that value.
+    /// </summary>
     public abstract class QueuedEventPropertyBase : IQueuedEventProperty
     {
         /// <summary>
