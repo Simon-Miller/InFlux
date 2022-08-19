@@ -37,8 +37,8 @@ namespace InFlux
         /// <summary>
         /// Subscribe or unsubscribe from this event to be informed of any changes to this dictionary,
         /// including Adds, Removes, and Updates to entries in this dictionary.
-        /// Call either: <seealso cref=".Subscribe(ValueChangedResponse{IEnumerable{KeyValuePair{K,V}}})"/>
-        /// or: <seealso cref=".UnSubscribe(Action{ValueChangedResponse{IEnumerable{KeyValuePair{K,V}}})"/>
+        /// Call either: Subscribe(ValueChangedResponse{IEnumerable{KeyValuePair{K,V}}})
+        /// or: UnSubscribe(Action{ValueChangedResponse{IEnumerable{KeyValuePair{K,V}}})
         /// </summary>
         public readonly QueuedEvent OnChanged = new();
 

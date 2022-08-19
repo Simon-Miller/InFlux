@@ -17,7 +17,6 @@
         private Dictionary<int, Action<ChainLink<T>>> subscriptions = new();
         private List<Action<ChainLink<T>>> oneOffSubscriptions = new();
 
-
         /// <summary>
         /// Called when the <see cref="FireEvent(T, Action)"/> method is about to process the event the chain.
         /// </summary>

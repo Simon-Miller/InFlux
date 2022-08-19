@@ -81,10 +81,6 @@ namespace InFlux
 
         private void setupMember(object? member)
         {
-#if DEBUG
-            Debug.WriteLine($"{nameof(EventsEntityBase<T>)}:{member}: reflection subscribe to OnValueChanged -> onMemberValueChanged");
-#endif
-
             if (member != null)
                 ((QueuedEventPropertyBase)member).OnValueChanged((oldValue, newValue) =>
                     this.onMemberValueChanged(oldValue, newValue));
