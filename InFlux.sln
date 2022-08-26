@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InFlux", "InFlux\InFlux.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InFluxTests", "InFluxTests\InFluxTests.csproj", "{21F90316-E61F-4007-BFB3-A8AD59E792CF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryDocumentDb", "BinaryDocumentDb\BinaryDocumentDb.csproj", "{36C80290-7519-462A-8267-87A4060C32E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryDocumentDb.Tests", "BinaryDocumentDb.Tests\BinaryDocumentDb.Tests.csproj", "{52EA9FAE-A0D7-4138-AC3B-5E7A3D5C9B9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{21F90316-E61F-4007-BFB3-A8AD59E792CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21F90316-E61F-4007-BFB3-A8AD59E792CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{21F90316-E61F-4007-BFB3-A8AD59E792CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36C80290-7519-462A-8267-87A4060C32E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36C80290-7519-462A-8267-87A4060C32E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36C80290-7519-462A-8267-87A4060C32E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36C80290-7519-462A-8267-87A4060C32E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52EA9FAE-A0D7-4138-AC3B-5E7A3D5C9B9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52EA9FAE-A0D7-4138-AC3B-5E7A3D5C9B9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52EA9FAE-A0D7-4138-AC3B-5E7A3D5C9B9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52EA9FAE-A0D7-4138-AC3B-5E7A3D5C9B9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
