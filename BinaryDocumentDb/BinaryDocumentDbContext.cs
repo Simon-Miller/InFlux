@@ -7,6 +7,8 @@ namespace BinaryDocumentDb
 {
     public class BinaryDocumentDbContext : IDisposable
     {
+        #region construct / dispose / destruct
+
         public BinaryDocumentDbContext(BdDbConfig config)
         {
             this.config = config;
@@ -15,39 +17,7 @@ namespace BinaryDocumentDb
             this.scanFile();
         }
 
-        ~BinaryDocumentDbContext()
-        {
-            this.Dispose();
-        }
-
-        private readonly BdDbConfig config;
-        private readonly FileStream fs;
-
         private bool isDisposed = false;
-
-        private SharedMemory sharedMem = new SharedMemory();
-
-        private readonly Dictionary<uint, uint> indexEntries = new Dictionary<uint, uint>();
-        private int numberOfDataIndexEntriesOnDisk = 0;
-
-        private struct FreeSpaceEntry 
-        {
-            public FreeSpaceEntry(uint offset, uint length)
-            {
-                this.Offset = offset;
-                this.Length = length;
-            }
-
-            public uint Offset;
-            public uint Length;
-        };
-
-        //private readonly Dictionary<uint, {uint offset, uint length}> freeSpaceIndexEntries = new Dictionary<uint, {uint offset uint length}>();
-        private readonly Dictionary<uint, FreeSpaceEntry> freeSpaceIndexEntries = new Dictionary<uint, FreeSpaceEntry>();
-        private int numberOfFreeSpaceIndexEntriesOnDisk = 0;
-
-        // when we want to save data, this is returned as the index key to use t
-        private int FindNextKey = 1;
 
         public void Dispose()
         {
@@ -57,63 +27,84 @@ namespace BinaryDocumentDb
             }
         }
 
+        ~BinaryDocumentDbContext()
+        {
+            this.Dispose();
+        }
+
+        #endregion
+
+        private readonly BdDbConfig config;
+        private readonly FileStream fs;
+
+        private SharedMemory sharedMem = new SharedMemory();
+
+        private readonly BlobIndex blobIndex = new BlobIndex();
+        private readonly FreeSpace freeSpace = new FreeSpace();
+
         private void scanFile()
         {
             this.fs.Seek(0, SeekOrigin.Begin);
             if(this.fs.Length > 0)
             {
-                int indexDataOffset = readInt();
+                int blobIndexFileOffset = readInt();
                 int freeSpaceIndexOffset = readInt();
+                
+                var numberOfDataIndexEntriesOnDisk = readInt(blobIndexFileOffset);
+                blobIndex.Index.Clear();
+                var numberOfBytes = numberOfDataIndexEntriesOnDisk * 8;
+                var bytes = new byte[numberOfBytes];
+                fs.Read(bytes, 0, numberOfBytes);
 
-                numberOfDataIndexEntriesOnDisk = readInt(indexDataOffset);
-                this.indexEntries.Clear();
-                for(int i=0; i< numberOfDataIndexEntriesOnDisk; i++)
-                {
-                    var key = readUInt();
-                    var value = readUInt();
+                blobIndex.Deserialize(bytes);
+                
+                var numberOfFreeSpaceEntries = readInt(freeSpaceIndexOffset);
+                freeSpace.Collection.Clear();
+                numberOfBytes = numberOfFreeSpaceEntries * 8;
+                bytes = new byte[numberOfBytes];
+                fs.Read(bytes, 0, numberOfBytes);
 
-                    // zero indicates the index is not used, and waiting to be filled.
-                    if(key != 0)
-                        this.indexEntries.Add(key, value);
-                }
-
-                // TODO: this is wrong.  says 96!  Must have missed something??
-                this.numberOfFreeSpaceIndexEntriesOnDisk = readInt(freeSpaceIndexOffset);
-                for(uint i=0; i< numberOfFreeSpaceIndexEntriesOnDisk; i++)
-                {
-                    this.freeSpaceIndexEntries.Add(i, new FreeSpaceEntry(readUInt(), readUInt()));
-                }
+                freeSpace.Deserialize(bytes);
             }
             else
             {
                 // create defaults, and save to file.
-                this.indexEntries.Clear();
-                this.freeSpaceIndexEntries.Clear();
+                this.blobIndex.Index.Clear();
+                this.freeSpace.Collection.Clear();
+
+                // Bytes 0 to 3
+                const uint BlobIndexFileOffset = 8; // after two pointers.
+
+                // bytes 4 to 7
+                const uint FreeSpaceIndexOffset = 12; // blob index size is 0. So only 4 bytes stored.  Therefore offset of 12 bytes.
 
                 fs.Seek(0, SeekOrigin.Begin);
-                writeUInt(8); // after pointer to free space!
 
-                var emptyBuffer = new byte[config.InitialIndexLength * 4 * 2];
+                // 0:
+                writeUInt(BlobIndexFileOffset); // after pointer to free space
+                
+                // 4:
+                writeUInt(FreeSpaceIndexOffset);
 
-                // Write pointer to free space index? 
-                var freeSpaceIndexOffset = (uint)(emptyBuffer.Length + 12);
-                writeUInt(freeSpaceIndexOffset); // hope its right.
+                // 8: BlobIndex
+                writeUInt(0); // zero entries!
 
-                writeUInt(config.InitialIndexLength);
-                            
-                for (int i = 0; i < emptyBuffer.Length; i++)
-                    emptyBuffer[i] = 0;
+                // Free space index here.
+                // calculate where free space begins as after the ONE entry in the table.  So 4 bytes for number of entries, then 8 bytes for entry.
+                // So 12 bytes.  
+                var freeSpaceEntry = new FreeSpaceEntry(24, 4096 - 24);
 
-                fs.Write(emptyBuffer, 0, emptyBuffer.Length);
+                // 12: free space index number of entries
+                writeUInt(1); // one entry.
 
-                // write free space index count, here.
-                this.freeSpaceIndexEntries.Add(1, new FreeSpaceEntry(freeSpaceIndexOffset + 4, 2048));
-                writeUInt((uint)(freeSpaceIndexOffset + 4));
-                writeUInt(2048);
+                // 16: entry offset
+                writeUInt(freeSpaceEntry.Offset);
 
-                // write free space data!  All 2k of it?
+                // 20: length of free space
+                writeUInt(freeSpaceEntry.Length);
 
-                for (int i = 0; i < 2048; i++)
+                // 24 - 4k - empty space.
+                for (int i = 0; i < 4096 - 24; i++)
                     fs.WriteByte(0);
 
                 // there's nothing else to write to the file.

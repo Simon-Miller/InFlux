@@ -1,26 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
 namespace BinaryDocumentDb
 {
-    internal class BlobIndex
+    internal class FreeSpace
     {
         /// <summary>
         /// key: a unique value we generate and give to you.  Entries are not 'named'.
         /// value: an offset (base zero) into the database file where this blob is stored.
         /// </summary>
-        public readonly Dictionary<uint, uint> Index = new Dictionary<uint, uint>();
-
-        // GetNextKey?  I can see why guids are nice at this point, but too much space if you ask me!
-        private uint nextKey = 1; // 0 is considered null?
-
-        public uint GetNextKey()
-        {
-            // Perhaps in future we can track deleted keys, and have a stack or queue of ready to use entries,
-            // and as a last resort, to give out a new value?
-            return nextKey++;
-        }
+        public readonly List<FreeSpaceEntry> Collection = new List<FreeSpaceEntry>();
 
         // serialize?
         public IReadOnlyList<byte> Serialize()
@@ -29,15 +17,15 @@ namespace BinaryDocumentDb
 
             var sharedMem = new SharedMemory();
 
-            foreach (var key in Index.Keys)
+            foreach (var entry in Collection)
             {
-                sharedMem.UInt = key;
+                sharedMem.UInt = entry.Offset;
                 data.Add(sharedMem.Byte0);
                 data.Add(sharedMem.Byte1);
                 data.Add(sharedMem.Byte2);
                 data.Add(sharedMem.Byte3);
 
-                sharedMem.UInt = Index[key];
+                sharedMem.UInt = entry.Length;
                 data.Add(sharedMem.Byte0);
                 data.Add(sharedMem.Byte1);
                 data.Add(sharedMem.Byte2);
@@ -50,7 +38,7 @@ namespace BinaryDocumentDb
         // deserialize?
         public void Deserialize(byte[] allEntries)
         {
-            Index.Clear();
+            Collection.Clear();
 
             var sharedMem = new SharedMemory();
 
@@ -61,21 +49,16 @@ namespace BinaryDocumentDb
                 sharedMem.Byte1 = allEntries[i + 1];
                 sharedMem.Byte2 = allEntries[i + 2];
                 sharedMem.Byte3 = allEntries[i + 3];
-                uint key = sharedMem.UInt;
+                uint offset = sharedMem.UInt;
 
                 sharedMem.Byte0 = allEntries[i + 4];
                 sharedMem.Byte1 = allEntries[i + 5];
                 sharedMem.Byte2 = allEntries[i + 6];
                 sharedMem.Byte3 = allEntries[i + 7];
-                uint value = sharedMem.UInt;
+                uint length = sharedMem.UInt;
 
-                Index.Add(key, value);
+                Collection.Add(new FreeSpaceEntry(offset, length));
             }
-
-            // reset the next available key.  
-            this.nextKey = (Index.Keys != null && Index.Keys.Count > 0)
-                ? Index.Keys.Max() + 1 
-                : 1;
         }
     }
 }

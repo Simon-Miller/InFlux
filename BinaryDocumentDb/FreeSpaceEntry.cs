@@ -1,8 +1,8 @@
 ﻿namespace BinaryDocumentDb
 {
-    public class FreeSpaceIndexEntry
+    public class FreeSpaceEntry
     {
-        public FreeSpaceIndexEntry(uint offset, uint length)
+        public FreeSpaceEntry(uint offset, uint length)
         {
             Offset = offset;
             Length = length;
