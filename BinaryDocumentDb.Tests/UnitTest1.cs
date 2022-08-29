@@ -1,3 +1,4 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace BinaryDocumentDb.Tests
 {
     [TestClass]
@@ -28,6 +29,33 @@ namespace BinaryDocumentDb.Tests
             // and write the index somewhere else in the available file space.
 
             // Assert
+        }
+
+        [TestMethod]
+        public void TestMethod2()
+        {
+            // Arrange
+            var config = new BdDbConfig() { FilePathAndName = "testDb2.bin" };
+            var context = new DocDbFileContext(config);
+
+            // Act
+            byte[] blob = new byte[] { 0, 1, 2, 254, 255 };
+            var blobKey = context.InsertBlob(blob);
+
+            var target = context.GetBlob(blobKey);
+
+            context.Dispose();
+        }
+
+        [TestMethod]
+        public void Can_read_blob()
+        {
+            // Arrange
+            var config = new BdDbConfig() { FilePathAndName = "testDb2.bin" };
+            var context = new DocDbFileContext(config);
+
+            // Act
+            var target = context.GetBlob(1); // known existing blob from previous test
         }
     }
 }

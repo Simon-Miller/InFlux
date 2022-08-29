@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace BinaryDocumentDb
 {
@@ -60,5 +61,7 @@ namespace BinaryDocumentDb
                 Collection.Add(new FreeSpaceEntry(offset, length));
             }
         }
+
+        
     }
 }

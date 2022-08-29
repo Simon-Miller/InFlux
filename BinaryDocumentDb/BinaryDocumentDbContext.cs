@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace BinaryDocumentDb
 {
@@ -34,6 +32,8 @@ namespace BinaryDocumentDb
 
         #endregion
 
+        #region fields
+
         private readonly BdDbConfig config;
         private readonly FileStream fs;
 
@@ -42,14 +42,20 @@ namespace BinaryDocumentDb
         private readonly BlobIndex blobIndex = new BlobIndex();
         private readonly FreeSpace freeSpace = new FreeSpace();
 
+        #endregion
+
+
+
+        #region helper methods
+
         private void scanFile()
         {
             this.fs.Seek(0, SeekOrigin.Begin);
-            if(this.fs.Length > 0)
+            if (this.fs.Length > 0)
             {
                 int blobIndexFileOffset = readInt();
                 int freeSpaceIndexOffset = readInt();
-                
+
                 var numberOfDataIndexEntriesOnDisk = readInt(blobIndexFileOffset);
                 blobIndex.Index.Clear();
                 var numberOfBytes = numberOfDataIndexEntriesOnDisk * 8;
@@ -57,7 +63,7 @@ namespace BinaryDocumentDb
                 fs.Read(bytes, 0, numberOfBytes);
 
                 blobIndex.Deserialize(bytes);
-                
+
                 var numberOfFreeSpaceEntries = readInt(freeSpaceIndexOffset);
                 freeSpace.Collection.Clear();
                 numberOfBytes = numberOfFreeSpaceEntries * 8;
@@ -82,7 +88,7 @@ namespace BinaryDocumentDb
 
                 // 0:
                 writeUInt(BlobIndexFileOffset); // after pointer to free space
-                
+
                 // 4:
                 writeUInt(FreeSpaceIndexOffset);
 
@@ -153,5 +159,7 @@ namespace BinaryDocumentDb
 
             fs.Write(new byte[] { sharedMem.Byte0, sharedMem.Byte1, sharedMem.Byte2, sharedMem.Byte3, }, 0, 4);
         }
+
+        #endregion
     }
 }
