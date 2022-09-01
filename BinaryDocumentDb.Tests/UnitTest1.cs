@@ -57,5 +57,59 @@ namespace BinaryDocumentDb.Tests
             // Act
             var target = context.GetBlob(1); // known existing blob from previous test
         }
+
+        [TestMethod]
+        public void can_map_freespace()
+        {
+            // Arrange
+            var freeSpaces = new List<(int Offset, int Length)>() 
+            {
+                (1,0),
+                (6,10)
+            };
+
+            var result = freeSpaces.Select(x => (Start: x.Offset - 1, End: (x.Offset - 1) + x.Length + 4)).ToList();
+
+            Assert.AreEqual(2,result.Count);
+            Assert.AreEqual(0, result[0].Start);
+            Assert.AreEqual(4, result[0].End);
+            Assert.AreEqual(5, result[1].Start);
+            Assert.AreEqual(19, result[1].End);
+        }
+
+        [TestMethod]
+        public void try_deflag_code()
+        {
+            var orderedMap = new List<(uint StartOffset, uint EndOffset)>() 
+            {
+                (0,4),
+                (5,19)
+            };
+
+            // index of entry.  NOTE: Delete in reverse order so each index does not affect the next.
+            var entriesToDelete = new List<int>();
+
+            var entriesToAmend = new List<(int index, uint newLength)>();
+
+            for (int i = 0; i < orderedMap.Count; i++)
+            {
+                var left = orderedMap[i];
+
+                for (int j = 0; j < orderedMap.Count; j++)
+                {
+                    var right = orderedMap[j];
+                    if (left.EndOffset == right.StartOffset - 1)
+                    {
+                        entriesToDelete.Add(j);
+
+                        var leftOffset = left.StartOffset + 1;
+                        var newLength = (right.EndOffset - leftOffset) - 4; // length value
+
+                        entriesToAmend.Add((index: i, newLength: newLength));
+                        break;
+                    }
+                }
+            }
+        }
     }
 }

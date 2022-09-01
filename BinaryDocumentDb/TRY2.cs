@@ -99,6 +99,96 @@ namespace BinaryDocumentDb
             }
         }
 
+        #region Delete related stuff
+
+        public void DeleteBlob(uint key)
+        {
+            
+        }
+
+        class MemoryBlock
+        {
+            public MemoryBlock(uint startOffset, uint endOffset)
+            {
+                StartOffset = startOffset;
+                EndOffset = endOffset;
+            }
+
+            internal readonly uint StartOffset;
+            internal readonly uint EndOffset;
+        }
+
+        List<MemoryBlock> freeSpaceMap()
+        {
+            // 0,0,0,0,0 empty entry
+            //   -
+            // 1,10,0,0,0,01,02,03,04,05,06,07,08,09,10 // blob entry
+            //   --
+            // Offset's point to Length - NOT the type byte.
+
+            // free space []
+            // 1 = 0
+            // 6 = 10
+
+            // translation: 1 is:-
+            //    from: ptr - 1 == 0 
+            //    to: (ptr - 1) + length of 0, + 4 (length in bytes of length value) = 4.
+            //    confirm: 0 to 4 = 5 bytes.
+
+            return FreeSpacesInFile.Select(x => new MemoryBlock(x.Offset - 1, (x.Offset - 1) + x.Length + 4)).ToList();
+        }
+
+        private void defragmentFreeSpaces()
+        {
+            var orderedMap = freeSpaceMap().OrderBy(x=> x.StartOffset).ToList();
+
+            // index of entry.  NOTE: Delete in reverse order so each index does not affect the next.
+            var entriesToDelete = new List<int>();
+
+            var entriesToAmend = new List<(int index, uint newLength)>();
+
+            for (int i = 0; i < orderedMap.Count; i++)
+            {
+                var left = orderedMap[i];
+
+                for (int j = 0; j < orderedMap.Count; j++)
+                {
+                    var right = orderedMap[j];
+                    if (left.EndOffset == right.StartOffset - 1)
+                    {
+                        entriesToDelete.Add(j);
+
+                        var leftOffset = left.StartOffset + 1;
+                        var newLength = (right.EndOffset - leftOffset) - 4; // length value
+
+                        entriesToAmend.Add((index: i, newLength: newLength));
+                        break;
+                    }
+                }
+            }
+
+            // Manage Amends (of empty space entry)
+            foreach (var amend in entriesToAmend)
+            {
+                var freeSpaceEntry = FreeSpacesInFile[amend.index];
+
+                // location of 4 x bytes that represent the length of free space
+                fs.Seek(freeSpaceEntry.Offset, SeekOrigin.Begin);
+                writeUInt(amend.newLength);
+
+                FreeSpacesInFile[amend.index] = new FreeSpaceEntry(freeSpaceEntry.Offset, amend.newLength);
+            }
+
+            // Remove deletes from in-memory List
+            foreach(var indexToDelete in entriesToDelete.OrderByDescending(x=>x))
+            {
+                FreeSpacesInFile.RemoveAt(indexToDelete);
+            }
+        }
+
+
+        #endregion
+
         /// <summary>
         /// length = number of bytes on disk, therefore the space + header + length values.
         /// </summary>
