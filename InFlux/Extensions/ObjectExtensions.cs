@@ -1,5 +1,8 @@
 ﻿namespace InFlux.Extensions
 {
+    /// <summary>
+    /// Extension methods for Objects.
+    /// </summary>
     public static class ObjectExtensions
     {
         /// <summary>

@@ -49,8 +49,8 @@
         /// <summary>
         /// Subscribe or unsubscribe from this event to be informed of any changes to this list,
         /// including Adds, Removes, and Updates to entries in this list.
-        /// Call either: <seealso cref=".Subscribe(ValueChangedResponse{IEnumerable{T}})"/>
-        /// or: <seealso cref=".UnSubscribe(Action{ValueChangedResponse{IEnumerable{T}})"/>
+        /// Call either: Subscribe(ValueChangedResponse &lt; IEnumerable &lt; T &gt; &gt;)"
+        /// or: UnSubscribe(Action{ValueChangedResponse &lt; IEnumerable &lt; T &gt; &gt;)"
         /// </summary>
         public readonly EventChain<(IEnumerable<T?> oldValues, IEnumerable<T?> newValues)> OnListChanged = new();
 
@@ -124,6 +124,11 @@
         /// </summary>
         public int IndexOf(T? item) => this.list.IndexOf(item);
 
+        /// <summary>
+        /// Calls provided code if <see cref="SuppressEvents"/> is FALSE.
+        /// otherwise does nothing.
+        /// </summary>
+        /// <param name="fireEventsCode">Code to execute if events are not being suppressed.</param>
         [DebuggerStepThrough]
         protected void SuppressEventsCheck(Action fireEventsCode)
         {

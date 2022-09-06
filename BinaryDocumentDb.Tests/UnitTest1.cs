@@ -78,7 +78,7 @@ namespace BinaryDocumentDb.Tests
         }
 
         [TestMethod]
-        public void try_deflag_code()
+        public void try_defrag_code()
         {
             var orderedMap = new List<(uint StartOffset, uint EndOffset)>() 
             {

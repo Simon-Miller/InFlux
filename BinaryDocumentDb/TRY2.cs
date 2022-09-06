@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace BinaryDocumentDb
 {
-    public class DocDbFileContext
+    public partial class DocDbFileContext
     {
         #region construct / dispose / destruct
 
@@ -104,18 +104,6 @@ namespace BinaryDocumentDb
         public void DeleteBlob(uint key)
         {
             
-        }
-
-        class MemoryBlock
-        {
-            public MemoryBlock(uint startOffset, uint endOffset)
-            {
-                StartOffset = startOffset;
-                EndOffset = endOffset;
-            }
-
-            internal readonly uint StartOffset;
-            internal readonly uint EndOffset;
         }
 
         List<MemoryBlock> freeSpaceMap()

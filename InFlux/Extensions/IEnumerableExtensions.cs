@@ -1,5 +1,8 @@
 ﻿namespace InFlux.Extensions
 {
+    /// <summary>
+    /// Extension methods for IEnumerable objects.
+    /// </summary>
     public static class IEnumerableExtensions
     {
         /// <summary>

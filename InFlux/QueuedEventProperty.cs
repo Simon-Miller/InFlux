@@ -4,7 +4,7 @@
     public delegate void ValueChangedResponse<T>(T? oldValue, T? newValue);
 
     /// <summary>
-    /// Represents a property who's value type is <see cref="T"/>.
+    /// Represents a property who's value type is <typeparamref name="T"/>.
     /// This property contains an event that is fired when the <see cref="Value"/> of this property changes.
     /// You are free to subscribe to <see cref="ValueChanged"/> which is a queued event.
     /// </summary>

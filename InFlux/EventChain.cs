@@ -76,10 +76,16 @@
 
             return false;
         }
+
+        /// <summary>
+        /// Helper collection of information about subscriber code.  These are members of the chain that have not yet reported
+        /// back that they have completed.  Completed chains are removed from this list.  Therefore, if you're wondering why your
+        /// chain event has not complete, it will be because these entries have not responded to say they have completed.
+        /// </summary>
         public readonly List<DebugSubscription> DebugSubscriptions = new();
         // POPULATE THIS ABOVE LIST (DebugSubscriptions).
         // I was thinking that with all subscriptions we generate an index as we fire the event
-        // we generate a DebugSubscription and add to the collection.  As the respond,
+        // we generate a DebugSubscription and add to the collection.  As they respond,
         // we know their ID, and can remove them from the list.
 
         /// <summary>

@@ -7,7 +7,6 @@ namespace InFlux
         /// <summary>
         /// output text to the Output window.
         /// </summary>
-        /// <param name="text"></param>
         public static void WriteLine(string text, [CallerMemberName] string? caller = null)
         {
             System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToLongTimeString()}:{caller}:{text}");

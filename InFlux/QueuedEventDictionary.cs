@@ -5,7 +5,7 @@ namespace InFlux
     /// <summary>
     /// Acts as a dictionary that will inform you when an item is added, removed, or replaced within it.
     /// (You subscribe to the <see cref="OnChanged"/> event)
-    /// Works best when your <see cref="T"/> is a record type, or some other immutable type.
+    /// Works best when your <typeparamref name="K"/> is a record type, or some other immutable type.
     /// This dictionary doesn't attempt to duplicate entries as you read them.  
     /// Therefore, this dictionary is only safe if your types are immutable.
     /// </summary>
@@ -84,8 +84,14 @@ namespace InFlux
             }
         }
 
+        /// <summary>
+        /// Gets an <see cref="ICollection{K}"/> containing the keys of the <see cref="Dictionary{K, V}"/>
+        /// </summary>
         public ICollection<K> Keys => this.dictionary.Keys;
 
+        /// <summary>
+        /// Gets an <see cref="ICollection{V}"/> containing the values of the <see cref="Dictionary{K, V}"/>
+        /// </summary>
         public ICollection<V> Values => this.dictionary.Values;
 
         /// <summary>

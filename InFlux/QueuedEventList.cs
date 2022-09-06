@@ -3,7 +3,7 @@
     /// <summary>
     /// Acts as a list that will inform you when an item is added, removed, or replaced within this list.
     /// (You subscribe to the <see cref="OnListChanged"/> event)
-    /// Works best when your <see cref="T"/> is a record type, or some other immutable type.
+    /// Works best when your <typeparamref name="T"/> is a record type, or some other immutable type.
     /// This list doesn't attempt to duplicate entries as you read them.  Therefore, this list is only safe
     /// if your types are immutable.
     /// </summary>
@@ -34,8 +34,8 @@
         /// <summary>
         /// Subscribe or unsubscribe from this event to be informed of any changes to this list,
         /// including Adds, Removes, and Updates to entries in this list.
-        /// Call either: <seealso cref=".Subscribe(ValueChangedResponse{IEnumerable{T}})"/>
-        /// or: <seealso cref=".UnSubscribe(Action{ValueChangedResponse{IEnumerable{T}})"/>
+        /// Call either: UnSubscribe(ValueChangedResponse &lt; IEnumerable &lt; T &gt; &gt;)"/>
+        /// or: UnSubscribe(Action{ValueChangedResponse &lt; IEnumerable &lt; T &gt; &gt;)"/>
         /// </summary>
         public readonly QueuedEvent<IEnumerable<T?>> OnListChanged = new();
 

@@ -19,6 +19,7 @@
         public EventChainProperty(T? startValue = default, bool onlyFireOnValueChanges = true)
         {
             this.value = (startValue is not null) ? startValue : default!;
+            this.onlyFireOnValueChanges = onlyFireOnValueChanges;
         }
 
         private readonly bool onlyFireOnValueChanges;
