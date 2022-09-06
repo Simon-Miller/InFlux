@@ -61,18 +61,10 @@ namespace BinaryDocumentDb.Tests.UnitTestHelpers
                     Position += offset;
                     break;
                 case SeekOrigin.End:
-                    Position = (Length - 1) - offset;
+                    Position = Length + offset; // expects negative numbers.  So length-1 should read the last byte when asked.
                     break;
                 default:
                     throw new NotImplementedException();
-            }
-
-            // Found this behaviour in the documentation. : https://docs.microsoft.com/en-us/dotnet/api/system.io.filestream.seek?view=net-6.0
-            if (Position >= Length)
-            {
-                var growCount = (Position - Length) + 1;
-                for (int i = 0; i < growCount; i++)
-                    Data.Add(0);
             }
 
             return Position;
@@ -90,7 +82,15 @@ namespace BinaryDocumentDb.Tests.UnitTestHelpers
             if (Position < Length)
                 Data[(int)Position] = value;
             else
+            {
+                // add empty 0's if the position is beyond the end of the file.
+                var emptySpaces = Position - Length;
+                for (int i = 0; i < emptySpaces; i++)
+                    Data.Add(0);
+
+                // add the byte now in the correct position.
                 Data.Add(value);
+            }
 
             Position++;
         }
@@ -206,6 +206,7 @@ namespace BinaryDocumentDb.Tests.UnitTestHelpers
             var target1 = new FakeVirtualFileStream(); // write all to end of stream
             var target2 = new FakeVirtualFileStream(new byte[] { 1, 2 }); // half current data, half new.
             var target3 = new FakeVirtualFileStream(new byte[] { 1, 2, 3, 4 }); // completely overwrite current
+            var target4 = new FakeVirtualFileStream(new byte[] { 1, 2 }); // to write to beyond end of stream
 
             var dataToWrite = new byte[] { 5, 6, 7, 8 };
 
@@ -213,6 +214,8 @@ namespace BinaryDocumentDb.Tests.UnitTestHelpers
             target1.Write(dataToWrite, 1, 2); // write 2 bytes to end of stream
             target2.Write(dataToWrite, 0, 4); // overwrite 2 bytes of current data, and extend stream by 2 bytes.
             target3.Write(dataToWrite, 0, 4); // overwrite existing data, but stream should remain the same length.
+            target4.Seek(2, SeekOrigin.End);  // positioned on 3rd byte beyond last byte in stream. 
+            target4.WriteByte(255);           // should fill previous 2 spaces with a zero, the target space with 255, and position +1
 
             // BOOM!  Found writing was wrong.  
             Assert.AreEqual(6, target1.Data[0]);
@@ -230,10 +233,14 @@ namespace BinaryDocumentDb.Tests.UnitTestHelpers
             Assert.AreEqual(7, target3.Data[2]);
             Assert.AreEqual(8, target3.Data[3]);
             Assert.AreEqual(4, target3.Length);
+
+            Assert.AreEqual(5, target4.Length);
+            Assert.AreEqual(5, target4.Position); // 5th position = end + 1
+            Assert.IsTrue(IEnumerableComparer.AreEqual(target4.Data, new byte[] { 1, 2, 0, 0, 255 }));
         }
 
         /// <summary>
-        /// unit test saved the day!
+        /// unit test saved the day! x 2
         /// </summary>
         [TestMethod]
         public void Seek_works()
@@ -248,21 +255,17 @@ namespace BinaryDocumentDb.Tests.UnitTestHelpers
             target.Seek(1, SeekOrigin.Current); // as we just read a byte (0x02) we should be at position 2, so this means offset to 3, please.
             var result2 = target.ReadByte();
 
-            target.Seek(2, SeekOrigin.End); // 2 from end = 1 == 0x02 ??
+            target.Seek(-2, SeekOrigin.End); // 2 from end = 1 == 0x02 ??
             var result3 = target.ReadByte();
 
             // behaviour of seeking beyond end of stream.
-            target.Seek(5, SeekOrigin.Begin); // should add 5 bytes of 0x00 to end of stream.  Length of stream should be 6
-            var xdata1 = target.Data[4];
-            var xdata2 = target.Data[5];
+            target.Seek(5, SeekOrigin.Begin); // position beyond length, but do nothing unless you Write or WriteByte.
 
             // Assert
             Assert.AreEqual(2, result1);
             Assert.AreEqual(4, result2);
-            Assert.AreEqual(2, result3);
-            Assert.AreEqual(0, xdata1);
-            Assert.AreEqual(0, xdata2);
-            Assert.AreEqual(6, target.Length);
+            Assert.AreEqual(3, result3);
+            Assert.AreEqual(4, target.Length); // still the same despite pointing beyond stream.
         }
     }
 }

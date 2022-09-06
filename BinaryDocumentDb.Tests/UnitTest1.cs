@@ -4,7 +4,7 @@ namespace BinaryDocumentDb.Tests
     [TestClass]
     public class UnitTest1
     {
-        [TestMethod]
+        //[TestMethod]
         public void TestMethod1()
         {
             // Arrange
@@ -31,7 +31,7 @@ namespace BinaryDocumentDb.Tests
             // Assert
         }
 
-        [TestMethod]
+        //[TestMethod]
         public void TestMethod2()
         {
             // Arrange
@@ -56,6 +56,25 @@ namespace BinaryDocumentDb.Tests
 
             // Act
             var target = context.GetBlob(1); // known existing blob from previous test
+        }
+
+        //[TestMethod]
+        public void testing_behaviour_of_real_FileStream()
+        {
+            using (var fs = new FileStream("test3.bin", FileMode.OpenOrCreate))
+            {
+                fs.WriteByte(255); // lenght == 1
+
+                fs.Seek(0, SeekOrigin.End); // position reported as 1 (zero based) on a file length of 1.  So didn't ADD anything.
+
+                fs.Seek(2, SeekOrigin.End); // position reported as 3, but Length still reports 1.  What will happen if I write here?
+                // if this the 'filling' I'm worried about?
+
+                fs.WriteByte(254); // length now repoted as 4.  Position also reported as 4.
+
+                fs.Seek(0, SeekOrigin.Begin);
+                var x = fs.ReadByte(); // 255, 0, 0, 254
+            }
         }
 
         [TestMethod]

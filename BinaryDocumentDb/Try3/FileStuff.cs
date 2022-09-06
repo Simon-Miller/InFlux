@@ -128,6 +128,20 @@ namespace BinaryDocumentDb
                 fs.Seek(fs.Length, SeekOrigin.Begin); // seek end of file as we've no more data.
         }
 
+        /// <summary>
+        /// attempt to seek a position that may be beyond the last byte of the stream.
+        /// This is a valid position to write to, so we don't want SEEK to fill in an extra zero byte
+        /// if we're just reading the file for instance.
+        /// </summary>
+        /// <param name="offset"></param>
+        private void safeSeekFromBeginning(int offset)
+        {
+            if(offset == fs.Length)
+            {
+                fs.Seek(0, SeekOrigin.End);
+            }
+        }
+
         private void processBlobEntry(Dictionary<uint, uint> keyToPhysicalOffsetInFile)
         {
             var dataLength = readUInt();
@@ -138,9 +152,9 @@ namespace BinaryDocumentDb
                 keyToPhysicalOffsetInFile.Add(key, (uint)(fs.Position - 8));
 
                 // seek end of blob, without accidentally adding a zero byte to the stream?
-                var offset = ((int)dataLength - 4) - 1;
-                if(offset> 0 )
-                    fs.Seek(offset, SeekOrigin.Current);
+                var offset = fs.Position + dataLength - 4;
+                if(dataLength > 4)
+                    fs.Seek(offset, SeekOrigin.Begin);
                 fs.ReadByte();
             }
             else

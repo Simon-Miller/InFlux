@@ -7,7 +7,7 @@
         /// Returns FALSE if values are not identical in the same sequence, or if one of the collections are null.
         /// Returns TRUE if both collections are null, or have the same length, and same values in the same sequence
         /// </summary>
-        public bool AreEqual<T>(IEnumerable<T> left, IEnumerable<T> right)
+        public static bool AreEqual<T>(IEnumerable<T> left, IEnumerable<T> right)
         {
             if (left is null && right is null) return true;
             if (left is null || right is null) return false;
@@ -19,7 +19,7 @@
 
                 var comparer = Comparer<T>.Default;
 
-                while (leftEnumerator.MoveNext() || rightEnumerator.MoveNext())
+                while (leftEnumerator.MoveNext() | rightEnumerator.MoveNext())
                 {
                     // could be null or exception?
                     var leftValue = leftEnumerator.Current;
