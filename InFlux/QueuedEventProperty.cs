@@ -1,6 +1,15 @@
 ﻿namespace InFlux
 {
+    /// <summary>
+    /// Non-generic version of delegate representing a change in value from an <paramref name="oldValue" />
+    /// to  <paramref name="newValue" />
+    /// </summary>
     public delegate void ValueChangedResponse(object? oldValue, object? newValue);
+
+    /// <summary>
+    /// generic version of delegate representing a change in value from an <paramref name="oldValue"/>
+    /// to  <paramref name="newValue" />
+    /// </summary>
     public delegate void ValueChangedResponse<T>(T? oldValue, T? newValue);
 
     /// <summary>
@@ -55,7 +64,9 @@
         internal override void OnValueChanged(ValueChangedResponse code) =>
             this.ValueChanged.Subscribe((O, N) => code(O, N));
 
-
+        /// <summary>
+        /// Implicity extract the value of a QueuedEventProperty to the underlying type.
+        /// </summary>
         public static implicit operator T(QueuedEventProperty<T> source) => source.Value;
     }
 }

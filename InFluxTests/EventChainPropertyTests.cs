@@ -34,13 +34,13 @@
                 parentCount++;
 
                 // proves the old and new values come through.
-                if (chain.payload.oldValue != chain.payload.newValue)
+                if (chain.Payload.oldValue != chain.Payload.newValue)
                 {
                     // tests method with callback which uses SubscribeOnce
-                    child.SetValue(true, () => chain.callbackWhenDone());
+                    child.SetValue(true, () => chain.CallbackWhenDone());
                 }
             });
-            child.ValueChanged.Subscribe(chain => { childCount++; chain.callbackWhenDone(); });
+            child.ValueChanged.Subscribe(chain => { childCount++; chain.CallbackWhenDone(); });
 
             bool isComplete = false;
             parent.ValueChangedEventCompleted.Subscribe(() => isComplete = true);

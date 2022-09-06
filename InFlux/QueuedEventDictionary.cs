@@ -108,10 +108,20 @@ namespace InFlux
 
         IEnumerable<V> IReadOnlyDictionary<K, V>.Values => this.dictionary.Values;
 
+        /// <summary>
+        /// Gets a value indicating whether access to the System.Collections.ICollection
+        /// is synchronized (thread safe).
+        /// </summary>
         public bool IsSynchronized => ((ICollection)this.dictionary).IsSynchronized;
 
+        /// <summary>
+        /// Gets an object that can be used to synchronize access to the System.Collections.ICollection.
+        /// </summary>
         public object SyncRoot => ((ICollection)this.dictionary).SyncRoot;
 
+        /// <summary>
+        /// Gets a value indicating whether the System.Collections.IDictionary object has a fixed size.
+        /// </summary>
         public bool IsFixedSize => ((IDictionary)this.dictionary).IsFixedSize;
 
         ICollection IDictionary.Keys => ((IDictionary)this.dictionary).Keys;

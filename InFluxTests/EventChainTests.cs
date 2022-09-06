@@ -20,18 +20,18 @@
             {
                 inst2.Event.FireEvent(123, () =>
                 {
-                    cl.callbackWhenDone(); 
+                    cl.CallbackWhenDone(); 
                 });
             });
             var subKey = inst2.Event.Subscribe(cb =>
             {
                 innerCalls++;
-                cb.callbackWhenDone();
+                cb.CallbackWhenDone();
             });
             inst2.Event.SubscribeOnce(cb =>
             {
                 oneOff++;
-                cb.callbackWhenDone();
+                cb.CallbackWhenDone();
             });
             inst1.Event.OnBeforeEvent.SubscribeOnce(()=> beforeEventFired = true);
             inst1.Event.OnEventCompleted.SubscribeOnce(()=> afterEventFired = true);

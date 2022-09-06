@@ -8,18 +8,26 @@
     /// <para>Therefore, within the context of Firing an event that uses the chain concept, a developer needs to
     /// be conscious of when they consider their code be complete.  If they call other events, should they
     /// also wait for a response from all their subscribers before deeming their own code complete, and thus
-    /// calling the <see cref="callbackWhenDone"/> action - signalling to the creator of this instance of 
+    /// calling the <see cref="CallbackWhenDone"/> action - signalling to the creator of this instance of 
     /// a <see cref="ChainLink{T}"/> that their code is completed.</para>
     /// </summary>
     public class ChainLink<T>
     {
         internal ChainLink(T payload, Action callbackWhenDone)
         {
-            this.payload = payload;
-            this.callbackWhenDone = callbackWhenDone;
+            this.Payload = payload;
+            this.CallbackWhenDone = callbackWhenDone;
         }
 
-        public readonly T payload;
-        public readonly Action callbackWhenDone;
+        /// <summary>
+        /// data being passed around by an event.
+        /// </summary>
+        public readonly T Payload;
+        
+        /// <summary>
+        /// Action you need to call when you are sure all your event listeners have processed your own events that may be raised during
+        /// the processing of your event handler for this event.
+        /// </summary>
+        public readonly Action CallbackWhenDone;
     }
 }

@@ -24,11 +24,11 @@ namespace BinaryDocumentDb
         private SharedMemory sharedMem = new SharedMemory();
 
         private uint nextKey = 1;
-        
+
         internal (Dictionary<uint, uint> index, List<FreeSpaceEntry> freeSpaces) ScanFile()
         {
             var keyToPhysicalOffsetInFile = new Dictionary<uint, uint>();
-            var  freeSpacesInFile = new List<FreeSpaceEntry>();
+            var freeSpacesInFile = new List<FreeSpaceEntry>();
 
             fs.Seek(0, SeekOrigin.Begin);
 
@@ -49,8 +49,8 @@ namespace BinaryDocumentDb
         /// Insert a blob into the database file, and return a unique key bywhich we can read the blob.
         /// </summary>
         internal uint InsertBlob(
-            Dictionary<uint, uint> keyToPhysicalOffsetInFile, 
-            List<FreeSpaceEntry> freeSpacesInFile, 
+            Dictionary<uint, uint> keyToPhysicalOffsetInFile,
+            List<FreeSpaceEntry> freeSpacesInFile,
             byte[] blob)
         {
             // find empty space, or move to end of file.
@@ -119,7 +119,7 @@ namespace BinaryDocumentDb
             var dataLength = readUInt();
 
             // 5 = entry type (1 byte) + data length (4 bytes)
-            freeSpacesInFile.Add(new FreeSpaceEntry((uint)(fs.Position - 5), dataLength + 5));           
+            freeSpacesInFile.Add(new FreeSpaceEntry((uint)(fs.Position - 5), dataLength + 5));
 
             bool anyMoreData = (fs.Position + dataLength < fs.Length);
             if (anyMoreData)
@@ -136,6 +136,16 @@ namespace BinaryDocumentDb
                 var key = readUInt();
 
                 keyToPhysicalOffsetInFile.Add(key, (uint)(fs.Position - 8));
+
+                // seek end of blob, without accidentally adding a zero byte to the stream?
+                var offset = ((int)dataLength - 4) - 1;
+                if(offset> 0 )
+                    fs.Seek(offset, SeekOrigin.Current);
+                fs.ReadByte();
+            }
+            else
+            {
+                throw new Exception("Bad data? length of blob is zero or less??");
             }
         }
 
@@ -199,7 +209,7 @@ namespace BinaryDocumentDb
         }
 
         private uint writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(
-            Dictionary<uint, uint> keyToPhysicalOffsetInFile, 
+            Dictionary<uint, uint> keyToPhysicalOffsetInFile,
             byte[] blob)
         {
             // write blob entry (header)
@@ -244,7 +254,7 @@ namespace BinaryDocumentDb
         /// length = number of bytes on disk, therefore the space + header + length values.
         /// </summary>
         private void writeFreeSpaceEntryToDiskAtCurrentPositionAndListEntry(
-            List<FreeSpaceEntry> freeSpacesInFile, 
+            List<FreeSpaceEntry> freeSpacesInFile,
             uint remainingDataSpace)
         {
             var position = (uint)fs.Position;

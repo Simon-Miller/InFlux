@@ -11,7 +11,7 @@ namespace InFluxTests
                 targetList.OnListChanged.Subscribe(chain =>
                 {
                     listChangeCalls++;
-                    chain.callbackWhenDone();
+                    chain.CallbackWhenDone();
                 });
                 targetList.OnListChanged.OnEventCompleted.Subscribe(() => listChangeEventCompleteCalls++);
             }
@@ -34,7 +34,7 @@ namespace InFluxTests
             common.targetList.OnItemAdded.Subscribe(chain =>
             {
                 addItemCalls++;
-                chain.callbackWhenDone();
+                chain.CallbackWhenDone();
             });
             common.targetList.OnItemAdded.OnEventCompleted.Subscribe(() => addItemEventCompleteCalls++);
 
@@ -59,7 +59,7 @@ namespace InFluxTests
 
             var rangeAddedCalls = 0;
             var addRangeAddedEventCompleteCalls = 0;
-            common.targetList.OnRangeAdded.Subscribe(chain => { rangeAddedCalls++; chain.callbackWhenDone(); });
+            common.targetList.OnRangeAdded.Subscribe(chain => { rangeAddedCalls++; chain.CallbackWhenDone(); });
             common.targetList.OnRangeAdded.OnEventCompleted.Subscribe(() => addRangeAddedEventCompleteCalls++);
 
             // Act
@@ -87,7 +87,7 @@ namespace InFluxTests
             common.targetList.OnItemRemoved.Subscribe(chain =>
             {
                 removeItemCalls++;
-                chain.callbackWhenDone();
+                chain.CallbackWhenDone();
             });
             common.targetList.OnItemRemoved.OnEventCompleted.Subscribe(() => removeItemEventCompleteCalls++);
 
@@ -116,7 +116,7 @@ namespace InFluxTests
             common.targetList.OnItemRemoved.Subscribe(chain =>
             {
                 removeItemCalls++;
-                chain.callbackWhenDone();
+                chain.CallbackWhenDone();
             });
             common.targetList.OnItemRemoved.OnEventCompleted.Subscribe(() => removeItemEventCompleteCalls++);
 
@@ -145,7 +145,7 @@ namespace InFluxTests
             common.targetList.OnItemChanged.Subscribe(chain =>
             {
                 changeItemCalls++;
-                chain.callbackWhenDone();
+                chain.CallbackWhenDone();
             });
             common.targetList.OnItemChanged.OnEventCompleted.Subscribe(() => changeItemEventCompleteCalls++);
 
@@ -175,7 +175,7 @@ namespace InFluxTests
             common.targetList.OnListCleared.Subscribe(chain =>
             {
                 listClearedCalls++;
-                chain.callbackWhenDone();
+                chain.CallbackWhenDone();
             });
             common.targetList.OnListCleared.OnEventCompleted.Subscribe(() => listClearedEventCompleteCalls++);
 
@@ -198,7 +198,7 @@ namespace InFluxTests
             var list = new EventChainList<int>();
             var calls = 0;
 
-            list.OnListChanged.Subscribe(chain => { calls++; chain.callbackWhenDone(); });
+            list.OnListChanged.Subscribe(chain => { calls++; chain.CallbackWhenDone(); });
 
             // Act
             list.Add(1); // should fire call.

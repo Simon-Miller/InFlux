@@ -15,11 +15,11 @@
         {
             // listen to all changes, and fire the more general ListChanged event in response
 
-            setupChain(this.OnItemAdded, chain => (default(T?).AsList(), chain.payload.AsList()));
-            setupChain(this.OnRangeAdded, chain => chain.payload);
-            setupChain(this.OnItemRemoved, chain => (chain.payload.AsList(), default(T).AsList()));
-            setupChain(this.OnItemChanged, chain => (chain.payload.oldValue.AsList(), chain.payload.newValue.AsList()));
-            setupChain(this.OnListCleared, chain => chain.payload);
+            setupChain(this.OnItemAdded, chain => (default(T?).AsList(), chain.Payload.AsList()));
+            setupChain(this.OnRangeAdded, chain => chain.Payload);
+            setupChain(this.OnItemRemoved, chain => (chain.Payload.AsList(), default(T).AsList()));
+            setupChain(this.OnItemChanged, chain => (chain.Payload.oldValue.AsList(), chain.Payload.newValue.AsList()));
+            setupChain(this.OnListCleared, chain => chain.Payload);
 
             // bubble up a change to THIS list, to the general OnListChanged event chain.
             void setupChain<TPayload>(EventChain<TPayload?> target, Func<ChainLink<TPayload?>, (IEnumerable<T?> oldValues, IEnumerable<T?> newValues)> mapToPayload)
@@ -27,7 +27,7 @@
                 target.Subscribe(chain =>
                 {
                     // don't want to hold-up the chain, as we want to fire an event that occurs AFTER.
-                    chain.callbackWhenDone();
+                    chain.CallbackWhenDone();
 
                     // this should fire AFTER the callback, so you hear about 'on something completed'
                     // BEFORE hearing about this list has changed!!

@@ -142,7 +142,7 @@ namespace InFlux
         {
             member.OnListChanged.Subscribe(chain =>
             {
-                chain.callbackWhenDone();
+                chain.CallbackWhenDone();
                 this.EntityChanged.FireEvent(default, (T?)this);
             });     
         }
