@@ -25,4 +25,8 @@
     <ProjectReference Include="..\BinaryDocumentDb\BinaryDocumentDb.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Try3\" />
+  </ItemGroup>
+
 </Project>
