@@ -1,4 +1,3 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace BinaryDocumentDb.Tests
 {
     [TestClass]
@@ -8,7 +7,7 @@ namespace BinaryDocumentDb.Tests
         public void TestMethod1()
         {
             // Arrange
-            var config = new BdDbConfig() { FilePathAndName="testDb.bin" };
+            var config = new BdDbConfig() { FilePathAndName = "testDb.bin" };
 
             // Act
             var context = new BinaryDocumentDbContext(config);
@@ -61,27 +60,25 @@ namespace BinaryDocumentDb.Tests
         //[TestMethod]
         public void testing_behaviour_of_real_FileStream()
         {
-            using (var fs = new FileStream("test3.bin", FileMode.OpenOrCreate))
-            {
-                fs.WriteByte(255); // lenght == 1
+            using var fs = new FileStream("test3.bin", FileMode.OpenOrCreate);
+            fs.WriteByte(255); // lenght == 1
 
-                fs.Seek(0, SeekOrigin.End); // position reported as 1 (zero based) on a file length of 1.  So didn't ADD anything.
+            fs.Seek(0, SeekOrigin.End); // position reported as 1 (zero based) on a file length of 1.  So didn't ADD anything.
 
-                fs.Seek(2, SeekOrigin.End); // position reported as 3, but Length still reports 1.  What will happen if I write here?
-                // if this the 'filling' I'm worried about?
+            fs.Seek(2, SeekOrigin.End); // position reported as 3, but Length still reports 1.  What will happen if I write here?
+                                        // if this the 'filling' I'm worried about?
 
-                fs.WriteByte(254); // length now repoted as 4.  Position also reported as 4.
+            fs.WriteByte(254); // length now repoted as 4.  Position also reported as 4.
 
-                fs.Seek(0, SeekOrigin.Begin);
-                var x = fs.ReadByte(); // 255, 0, 0, 254
-            }
+            fs.Seek(0, SeekOrigin.Begin);
+            var x = fs.ReadByte(); // 255, 0, 0, 254
         }
 
         [TestMethod]
         public void can_map_freespace()
         {
             // Arrange
-            var freeSpaces = new List<(int Offset, int Length)>() 
+            var freeSpaces = new List<(int Offset, int Length)>()
             {
                 (1,0),
                 (6,10)
@@ -89,7 +86,7 @@ namespace BinaryDocumentDb.Tests
 
             var result = freeSpaces.Select(x => (Start: x.Offset - 1, End: (x.Offset - 1) + x.Length + 4)).ToList();
 
-            Assert.AreEqual(2,result.Count);
+            Assert.AreEqual(2, result.Count);
             Assert.AreEqual(0, result[0].Start);
             Assert.AreEqual(4, result[0].End);
             Assert.AreEqual(5, result[1].Start);
@@ -99,7 +96,7 @@ namespace BinaryDocumentDb.Tests
         [TestMethod]
         public void try_defrag_code()
         {
-            var orderedMap = new List<(uint StartOffset, uint EndOffset)>() 
+            var orderedMap = new List<(uint StartOffset, uint EndOffset)>()
             {
                 (0,4),
                 (5,19)

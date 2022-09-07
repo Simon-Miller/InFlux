@@ -5,26 +5,30 @@ namespace BinaryDocumentDb.Extensions
 {
     internal static class IEnumerableExtensions
     {
-        public static T Lowest<T>(this IEnumerable<T> collection, Func<T, IComparable> comparableValueGetter)
+        public static T Lowest<T>(this IEnumerable<T>? collection, Func<T, IComparable> comparableValueGetter)
         {
             IComparable? lowest = null;
-            T lowestItem = default;
+            T lowestItem = default; // could be null
 
-            foreach (var item in collection)
-            {
-                IComparable value = comparableValueGetter(item);
-                if (lowest is null)
-                    lowest = value;
-                else
+            if (collection != null)
+                foreach (var item in collection)
                 {
-                    var result = value.CompareTo(lowest);
-                    if (result < 0)
+                    IComparable value = comparableValueGetter(item);
+                    if (lowest is null)
                     {
                         lowest = value;
                         lowestItem = item;
                     }
-                }
-            }
+                    else
+                    {
+                        var result = value.CompareTo(lowest);
+                        if (result < 0)
+                        {
+                            lowest = value;
+                            lowestItem = item;
+                        }
+                    }
+                }           
 
             return lowestItem!;
         }

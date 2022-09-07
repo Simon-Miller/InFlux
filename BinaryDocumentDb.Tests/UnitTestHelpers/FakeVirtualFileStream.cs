@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-namespace BinaryDocumentDb.Tests.UnitTestHelpers
+﻿namespace BinaryDocumentDb.Tests.UnitTestHelpers
 {
     internal class FakeVirtualFileStream : IVirtualFileStream
     {

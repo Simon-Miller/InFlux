@@ -55,38 +55,67 @@ namespace BinaryDocumentDb
         {
             // find empty space, or move to end of file.
             // Entry needs to be an exact match for the size of the blob OR enough space for the blob + an entry for the remaining space.
-            var availableSpace = freeSpacesInFile.Where(e => e.Length == blob.Length
-                                                          || e.Length >= (blob.Length + FULL_EMPTY_ENTRY_BYTES_SIZE)
-                                                       )?.Lowest(x => x.Length);
-            if (availableSpace is null)
+
+            var rawLength = blob.Length + HEADER_BYTES_SIZE + LENGTH_VALUE_BYTES_SIZE + KEY_VALUE_BYTES_SIZE;
+            var entryPlusEmptyLength = rawLength + FULL_EMPTY_ENTRY_BYTES_SIZE;
+
+            var availableSpace = freeSpacesInFile.Where(e => e.Length == rawLength || e.Length >= entryPlusEmptyLength)
+                                                 .Lowest(e => e.Length);
+
+            if(availableSpace?.Length == rawLength)
+                return saveBlobAtEmptySpaceWithNoNewEmptySpaceEntryNecessary();
+
+            else if(availableSpace?.Length >= entryPlusEmptyLength)
+                return saveBlobAtEmptySpaceWithNewEmptySpaceEntryAtEnd();
+
+            else
+                return saveBlobAtEndOfStream();
+           
+            #region local methods
+
+            uint saveBlobAtEmptySpaceWithNewEmptySpaceEntryAtEnd()
+            {
+                // write blob at available space (and add to index).
+                fs.Seek(availableSpace!.Offset, SeekOrigin.Begin);
+                var key = writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, blob);
+
+                // write new empty entry in remaining space.
+                var rawLengthToLose = blob.Length + HEADER_BYTES_SIZE + LENGTH_VALUE_BYTES_SIZE + KEY_VALUE_BYTES_SIZE;
+                var newAvailableSpaceLength = availableSpace.Length - rawLengthToLose;
+
+                writeFreeSpaceEntryToDiskAtCurrentPositionAndListEntry(freeSpacesInFile, (uint)newAvailableSpaceLength);
+                freeSpacesInFile.Remove(availableSpace); // old entry no longer relevant as we created a new one
+
+                // for the user.
+                return key;
+            }
+
+            uint saveBlobAtEmptySpaceWithNoNewEmptySpaceEntryNecessary()
+            {
+                // need to overwrite empty space entry with blob entry.
+                fs.Seek(availableSpace.Offset, SeekOrigin.Begin);
+                var key = writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, blob);
+
+                // need to remove the empty entry from list of empty entries. (exactly overwritten on disk)
+                freeSpacesInFile.Remove(availableSpace);
+
+                // for the user.
+                return key;
+            }
+
+            uint saveBlobAtEndOfStream()
             {
                 // seek the end of the file, which is where we can write this blob.
-                fs.Seek(fs.Length, SeekOrigin.Begin);
+                fs.Seek(0, SeekOrigin.End);
 
                 var key = writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, blob);
 
                 // for the user.
                 return key;
             }
-            else
-            {
-                // seek the position to start writing the blob. entry.
-                fs.Seek(availableSpace.Offset, SeekOrigin.Begin);
 
-                var key = writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, blob);
-
-                // create an empty space AFTER the blob entry.
-                var blobSizePlusMetaData = blob.Length + HEADER_BYTES_SIZE + LENGTH_VALUE_BYTES_SIZE + KEY_VALUE_BYTES_SIZE;
-
-                var remainingDataSpace = (uint)(availableSpace.Length - blob.Length);
-                writeFreeSpaceEntryToDiskAtCurrentPositionAndListEntry(freeSpacesInFile, remainingDataSpace);
-
-                // for the user.
-                return key;
-            }
+            #endregion
         }
-
-
 
         #region scan file stream
 
@@ -116,46 +145,36 @@ namespace BinaryDocumentDb
 
         private void processEmptyEntry(List<FreeSpaceEntry> freeSpacesInFile)
         {
-            var dataLength = readUInt();
+            // number of bytes including header byte, so minimum of 5.
+            var rawLength = readUInt();
 
             // 5 = entry type (1 byte) + data length (4 bytes)
-            freeSpacesInFile.Add(new FreeSpaceEntry((uint)(fs.Position - 5), dataLength + 5));
+            freeSpacesInFile.Add(new FreeSpaceEntry((uint)(fs.Position - 5), rawLength));
+
+            var dataLength = rawLength - 5;
 
             bool anyMoreData = (fs.Position + dataLength < fs.Length);
             if (anyMoreData)
                 fs.Seek(fs.Position + dataLength, SeekOrigin.Begin); // skip empty data in file, which should now point to next entry (or out of file)
             else
-                fs.Seek(fs.Length, SeekOrigin.Begin); // seek end of file as we've no more data.
-        }
-
-        /// <summary>
-        /// attempt to seek a position that may be beyond the last byte of the stream.
-        /// This is a valid position to write to, so we don't want SEEK to fill in an extra zero byte
-        /// if we're just reading the file for instance.
-        /// </summary>
-        /// <param name="offset"></param>
-        private void safeSeekFromBeginning(int offset)
-        {
-            if(offset == fs.Length)
-            {
-                fs.Seek(0, SeekOrigin.End);
-            }
+                fs.Seek(0, SeekOrigin.End); // seek end of file as we've no more data.
         }
 
         private void processBlobEntry(Dictionary<uint, uint> keyToPhysicalOffsetInFile)
         {
-            var dataLength = readUInt();
-            if (dataLength > 4)
+            var rawLength = readUInt();
+
+            // idiot check.
+            if (rawLength > 9)
             {
                 var key = readUInt();
 
-                keyToPhysicalOffsetInFile.Add(key, (uint)(fs.Position - 8));
+                keyToPhysicalOffsetInFile.Add(key, (uint)(fs.Position - 9));
 
                 // seek end of blob, without accidentally adding a zero byte to the stream?
-                var offset = fs.Position + dataLength - 4;
-                if(dataLength > 4)
-                    fs.Seek(offset, SeekOrigin.Begin);
-                fs.ReadByte();
+                var offset = fs.Position + rawLength - 9;
+                
+                fs.Seek(offset, SeekOrigin.Begin);
             }
             else
             {
@@ -169,10 +188,10 @@ namespace BinaryDocumentDb
             // So we waste 5 bytes?  whoopy-doo!
 
             writeByte(EMPTY_ENTRY);
-            writeUInt(0); // length of entry.
+            writeUInt(5); // length of entry including header byte.
 
             freeSpacesInFile.Clear();
-            freeSpacesInFile.Add(new FreeSpaceEntry(0, 0)); // empty entry, with length of 0.  Wastes 5 bytes!
+            freeSpacesInFile.Add(new FreeSpaceEntry(0, 5)); // empty entry, with length of 0.  Wastes 5 bytes!
         }
 
         #endregion
@@ -226,12 +245,12 @@ namespace BinaryDocumentDb
             Dictionary<uint, uint> keyToPhysicalOffsetInFile,
             byte[] blob)
         {
+            // remember this Position for the 'index' dictionary.
+            var offset = (uint)fs.Position;
+
             // write blob entry (header)
             //------------------
             writeByte(BLOB_ENTRY);
-
-            // remember this Position for the 'index' dictionary.
-            var offset = (uint)fs.Position;
 
             // save to disk
             var key = writeBlobDataToDiskAtCurrentPosition(blob);
@@ -252,7 +271,7 @@ namespace BinaryDocumentDb
             var key = getNextKey();
 
             // length:
-            writeUInt((uint)blob.Length);
+            writeUInt((uint)blob.Length + HEADER_BYTES_SIZE + LENGTH_VALUE_BYTES_SIZE + KEY_VALUE_BYTES_SIZE);
 
             // key:
             writeUInt(key);
