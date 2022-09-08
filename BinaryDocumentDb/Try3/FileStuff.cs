@@ -33,7 +33,10 @@ namespace BinaryDocumentDb
             fs.Seek(0, SeekOrigin.Begin);
 
             if (fs.Length > 0)
+            {
                 importDataFromFileStream(keyToPhysicalOffsetInFile, freeSpacesInFile);
+                defragmentFreeSpaces(freeSpacesInFile);
+            }
             else
                 saveDefaultFileForFutureUse(freeSpacesInFile);
 
@@ -112,6 +115,160 @@ namespace BinaryDocumentDb
 
                 // for the user.
                 return key;
+            }
+
+            #endregion
+        }
+
+        private void defragmentFreeSpaces(List<FreeSpaceEntry> freeSpaces)
+        {
+            // index of entry.  NOTE: Delete in reverse order so each index does not affect the next.
+            var entriesToDelete = new List<int>();
+            var entriesToAmend = new List<(int index, uint newLength)>();
+            var orderedFreeSpaceMap = new List<MemoryBlock>();
+            var changesCount = 0;
+
+            do
+            {
+                // reset
+                changesCount = 0;
+                entriesToDelete.Clear();
+                entriesToAmend.Clear();
+                orderedFreeSpaceMap = freeSpaceMap(freeSpaces).OrderBy(x => x.StartOffset).ToList();
+
+                // ideally this re-iterates or does what ever it needs to so we only have to hit the DB file ONCE.
+                var results = findFragmentations();
+
+                if(results != null)
+                {
+                    // needs to happen before deletes, so the index don't change.
+                    processInMemoryUpdates(results.Value.updates);
+
+                    // persiste the minimum changes necessary to disk. Also needs to happen before deletes in memory.
+                    processStreamUpdates(results.Value.updates);
+
+                    // must happen after updates do we don't change indexes of update entries.                    
+                    processInMemoryDeletes(results.Value.deletes); 
+                }
+            }
+            while (changesCount > 0);
+
+            #region local helper methods
+
+            List<MemoryBlock> freeSpaceMap(List<FreeSpaceEntry> freeSpaces)
+            {
+                // 0,0,0,0,0 empty entry
+                //   -
+                // 1,15,0,0,0,01,02,03,04,05,06,07,08,09,10 // blob entry
+                //   --
+                // Offset point to the TYPE byte.
+
+                // free space []
+                // 0
+                // 20 ?? (if there were an entry above)
+
+                // translation: 0 is:-
+                //    from: ptr = 0 
+                //    to: ptr + (length of [0] ==  5) - 1 (so the second offset is the LAST byte).
+                //    confirm: 0 to 4 = 5 bytes.
+
+                return freeSpaces.Select(x => new MemoryBlock(x.Offset, x.Offset + x.Length - 1)).ToList();
+            }
+
+            (IEnumerable<int> deletes, IEnumerable<(int idxToUpdate, uint newLength)> updates)? findFragmentations()
+            {
+                // idiot check
+                if (orderedFreeSpaceMap is null || orderedFreeSpaceMap.Count == 1) return null;
+
+                var deletes = new List<int>();
+                var updates = new List<(int idxToUpdate, uint newLength)>();
+
+                int selectedFreeSpaceIndex = 0;
+
+                do
+                {
+                    var freeSpace = orderedFreeSpaceMap[selectedFreeSpaceIndex];
+                    var newStartOffset = freeSpace.StartOffset;
+                    var newEndOffset = freeSpace.EndOffset;
+
+                    int compareFreeSpaceIndex = selectedFreeSpaceIndex + 1;
+                    var compareFreeSpace = orderedFreeSpaceMap[compareFreeSpaceIndex];
+
+                    if (freeSpace.EndOffset + 1 == compareFreeSpace.StartOffset)
+                    {
+                        // defrag needed.  We can count this as one merge, but there may be others.
+                        // We than therefore iterate over the next one(s) to see if there are more.
+                        // in reality the most we are likely to ever see is 3 in a row. (space)(entry just deleted)(space)
+
+                        newEndOffset = compareFreeSpace.EndOffset;
+
+                        deletes.Add(compareFreeSpaceIndex);
+
+                        var tryNext = false;
+                        var skipEntriesCount = 1;
+                        var nextIndex = compareFreeSpaceIndex + 1;
+                        do
+                        {
+                            tryNext = false;
+                            MemoryBlock? nextFreeSpace = orderedFreeSpaceMap.Count > nextIndex ? orderedFreeSpaceMap[nextIndex] : null;
+
+                            if (nextFreeSpace != null)
+                            {
+                                if (compareFreeSpace.EndOffset + 1 == nextFreeSpace.StartOffset)
+                                {
+                                    compareFreeSpaceIndex++;
+                                    compareFreeSpace = orderedFreeSpaceMap[compareFreeSpaceIndex];
+
+                                    deletes.Add(nextIndex);
+
+                                    nextIndex++;
+                                    skipEntriesCount++;
+
+                                    newEndOffset = compareFreeSpace.EndOffset;
+
+                                    tryNext = true;
+                                }
+                            }
+                        }
+                        while (tryNext);
+
+                        var calcLength = (newEndOffset - newStartOffset) + 1;
+
+                        updates.Add((selectedFreeSpaceIndex, calcLength));
+
+                        selectedFreeSpaceIndex += skipEntriesCount;
+                    }
+
+                    selectedFreeSpaceIndex++;
+                }
+                while (selectedFreeSpaceIndex < orderedFreeSpaceMap.Count);
+
+                return (deletes, updates);
+            }
+
+            void processInMemoryDeletes(IEnumerable<int> indexesToDelete)
+            {
+                foreach (var idx in indexesToDelete.OrderByDescending(x=>x))
+                    freeSpaces.RemoveAt(idx);
+            }
+
+            void processInMemoryUpdates(IEnumerable<(int index, uint newLength)> updates)
+            {
+                foreach (var update in updates)
+                {
+                    var freeSpaceEntry = freeSpaces[update.index];
+                    freeSpaces[update.index] = new FreeSpaceEntry(freeSpaceEntry.Offset, update.newLength);
+                }
+            }
+
+            void processStreamUpdates(IEnumerable<(int index, uint newLength)> updates)
+            {
+                foreach (var update in updates)
+                {
+                    var freeSpaceEntry = freeSpaces[update.index];
+                    fs.Seek(freeSpaceEntry.Offset + HEADER_BYTES_SIZE, SeekOrigin.Begin);
+                    writeUInt(update.newLength);
+                }
             }
 
             #endregion

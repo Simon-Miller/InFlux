@@ -73,6 +73,39 @@ namespace BinaryDocumentDb.Tests.Try3
         }
 
         [TestMethod]
+        public void Can_defrag_empty_space_entries()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,    // empty 5 bytes entry
+                0, 6,0,0,0,0,  // empty 6 bytes entry
+                0, 7,0,0,0,0,0,// empty 7 bytes entry
+
+                1, 10,0,0,0, 1,0,0,0, 123, // blob entry in middle.
+
+                0, 5,0,0,0,    // empty 5 bytes entry
+                0, 6,0,0,0,0,  // empty 6 bytes entry
+
+                1, 12,0,0,0, 2,0,0,0, 1,2,3 // blob entry at end.
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            Assert.AreEqual(2, freespace.Count);
+
+            // Gotcha! Off by one?  reports 17 when should be 18?
+            // Gotcha! 4th free space entry NOT merged with 5th?
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] 
+                { 0,18,0,0,0, 0,6,0,0,0,0, 0,7,0,0,0,0,0, // defrag'd entry with old data unchanged
+                  1, 10,0,0,0, 1,0,0,0, 123,              // existing entry unchanged
+                  0, 11,0,0,0, 0,6,0,0,0,0,               // defrag'd entry with old data unchanged
+                  1, 12,0,0,0, 2,0,0,0, 1,2,3             // existing entry unchanged
+                }));
+        }
+
+        [TestMethod]
         public void Can_insert_blob_at_end()
         {
             // Arrange
@@ -98,10 +131,6 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0,5,0,0,0, 1, 12,0,0,0, 1,0,0,0, 1,2,3 }));
         }
 
-        /// <summary>
-        /// GOTCHAS! :
-        /// 1. free space still has entry after the insert? (available space code finder - code incorrect)
-        /// </summary>
         [TestMethod]
         public void Can_insert_blob_in_available_space_of_exact_size()
         {
