@@ -32,5 +32,25 @@ namespace BinaryDocumentDb.Extensions
 
             return lowestItem!;
         }
+
+        /// <summary>
+        /// returns -1 if not found.  Otherwise returns the index within the collection of the first item
+        /// matching the predicate.
+        /// </summary>
+        public static int FirstIndexOf<T>(this IEnumerable<T>? collection, Func<T, bool> predicate)
+        {
+            if (collection is null) return -1;
+
+            int index = 0;
+            foreach(var item in collection)
+            {
+                if (predicate(item))
+                    return index;
+
+                index++;
+            }
+
+            return -1;
+        }
     }
 }

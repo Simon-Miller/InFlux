@@ -1,6 +1,4 @@
-﻿using BinaryDocumentDb.Tests.UnitTestHelpers;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace BinaryDocumentDb.Tests.Try3
 {
     [TestClass]
@@ -97,7 +95,7 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Gotcha! Off by one?  reports 17 when should be 18?
             // Gotcha! 4th free space entry NOT merged with 5th?
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] 
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0,18,0,0,0, 0,6,0,0,0,0, 0,7,0,0,0,0,0, // defrag'd entry with old data unchanged
                   1, 10,0,0,0, 1,0,0,0, 123,              // existing entry unchanged
                   0, 11,0,0,0, 0,6,0,0,0,0,               // defrag'd entry with old data unchanged
@@ -128,7 +126,7 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.AreEqual(5u, index[key]);
             Assert.AreEqual(17, fs.Length); // free space entry + blob entry with 3 data bytes
 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0,5,0,0,0, 1, 12,0,0,0, 1,0,0,0, 1,2,3 }));
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 5, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
         }
 
         [TestMethod]
@@ -156,10 +154,10 @@ namespace BinaryDocumentDb.Tests.Try3
 
             Assert.AreEqual(0, freespace.Count);
             Assert.AreEqual(1, index.Count);
-            
+
             Assert.AreEqual(0u, index[key]);
 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 1, 12,0,0,0, 1,0,0,0, 1,2,3 }));
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
         }
 
         [TestMethod]
@@ -190,7 +188,7 @@ namespace BinaryDocumentDb.Tests.Try3
 
             Assert.AreEqual(5u, index[key]);
 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 5,0,0,0, 1, 12,0,0,0, 1,0,0,0, 1,2,3 }));
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 5, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
         }
 
         [TestMethod]
@@ -221,7 +219,7 @@ namespace BinaryDocumentDb.Tests.Try3
 
             Assert.AreEqual(0u, index[key]);
 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3,   0, 8,0,0,0, 0,0,0 }));
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, 0, 8, 0, 0, 0, 0, 0, 0 }));
         }
 
         [TestMethod]
@@ -252,7 +250,113 @@ namespace BinaryDocumentDb.Tests.Try3
 
             Assert.AreEqual(14u, index[key]);
 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3}));
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
+        }
+
+        [TestMethod]
+        public void Can_delete_entry_at_beginning_followed_by_empty_entry()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                1, 10,0,0,0, 1,0,0,0, 123, // blob entry in middle.
+
+                0, 5,0,0,0,                // empty 5 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.DeleteBlob(index, freespace, 1);
+
+            // Assert
+            Assert.AreEqual(0, index.Count);
+            Assert.AreEqual(1, freespace.Count); // should defrag
+
+            // GOTCHA!  theory: Looks like empty entry got overwritten instead of the blob entry?
+            //          NOTE: walking through the code, I can see its actually the defragment routine?
+
+            // GOTCHA!  theory: Looks like the entry to be updated has the wrong offset? Or not being called?
+            //          NOTE: Appears the free space entry doesn't appear to have updated?
+            //              theory: Wrong index updated, and later gets deleted?
+            
+            //              NOTE: turns out there was confusion between original list, and a sorted one, where we need
+            //                    indexes into the original list, not the sorted list that gets thrown away.
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 15,0,0,0, 1,0,0,0, 123,   0, 5,0,0,0 }));
+        }
+
+        [TestMethod]
+        public void Can_delete_entry_in_middle_of_two_empty_entries()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                // empty 5 bytes entry
+
+                1, 10,0,0,0, 1,0,0,0, 123, // blob entry in middle.
+
+                0, 5,0,0,0,                // empty 5 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.DeleteBlob(index, freespace, 1);
+
+            // Assert
+            Assert.AreEqual(0, index.Count);
+            Assert.AreEqual(1, freespace.Count); // should defrag
+
+            // GOTCHA! observation: Seeing 2 x deletes both pointing at same index??
+            //  
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] 
+                { 0, 20,0,0,0,   1, 10,0,0,0, 1,0,0,0, 123,  0, 5,0,0,0 }));
+        }
+
+        [TestMethod]
+        public void Can_delete_entry_at_end_preceded_by_empty_entry()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                // empty 5 bytes entry
+
+                1, 10,0,0,0, 1,0,0,0, 123, // blob entry in middle.
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.DeleteBlob(index, freespace, 1);
+
+            // Assert
+            Assert.AreEqual(0, index.Count);
+            Assert.AreEqual(1, freespace.Count); // should defrag
+
+            // GOTCHA! observation: Seeing 2 x deletes both pointing at same index??
+            //  
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 15,0,0,0,   1, 10,0,0,0, 1,0,0,0, 123}));
+        }
+
+        [TestMethod]
+        public void Can_delete_entry_in_middle_of_two_other_entries()
+        {
+
+        }
+
+
+        [TestMethod]
+        public void Can_read_existing_blob()
+        {
+
         }
     }
 }

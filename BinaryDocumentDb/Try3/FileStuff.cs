@@ -65,15 +65,15 @@ namespace BinaryDocumentDb
             var availableSpace = freeSpacesInFile.Where(e => e.Length == rawLength || e.Length >= entryPlusEmptyLength)
                                                  .Lowest(e => e.Length);
 
-            if(availableSpace?.Length == rawLength)
+            if (availableSpace?.Length == rawLength)
                 return saveBlobAtEmptySpaceWithNoNewEmptySpaceEntryNecessary();
 
-            else if(availableSpace?.Length >= entryPlusEmptyLength)
+            else if (availableSpace?.Length >= entryPlusEmptyLength)
                 return saveBlobAtEmptySpaceWithNewEmptySpaceEntryAtEnd();
 
             else
                 return saveBlobAtEndOfStream();
-           
+
             #region local methods
 
             uint saveBlobAtEmptySpaceWithNewEmptySpaceEntryAtEnd()
@@ -120,38 +120,71 @@ namespace BinaryDocumentDb
             #endregion
         }
 
+        /// <summary>
+        /// Read a blob from the database file.  IF the <paramref name="key"/> doesn't exist in the dictionary,
+        /// an exception will be thrown.  
+        /// Exceptions are also thrown if the offset is found to NOT be pointing at a blob,
+        /// or if reading the raw data appears to be corrupt - likely because you're not actually pointing at a blob entry!
+        /// </summary>
+        internal BlobEntry ReadBlob(Dictionary<uint, uint> keyToPhysicalOffsetInFile, uint key)
+        {
+            var offset = keyToPhysicalOffsetInFile[key];
+            return readBlob(offset);
+        }
+
+        /// <summary>
+        /// Delete a blob and mark it as empty space.  Also defragments the empty spaces.
+        /// </summary>
+        internal void DeleteBlob(Dictionary<uint, uint> keyToPhysicalOffsetInFile,
+            List<FreeSpaceEntry> freeSpacesInFile,
+            uint blobKey)
+        {
+            // find entry.
+            var entryOffset = keyToPhysicalOffsetInFile[blobKey]; // dictionary will throw exception if not exists.
+            var byteLengthOfEntry = readEntryLengthOnly(entryOffset);
+
+            // Remove from index.
+            keyToPhysicalOffsetInFile.Remove(blobKey);
+
+            // Add to free spaces.
+            freeSpacesInFile.Add(new FreeSpaceEntry(entryOffset, byteLengthOfEntry));
+
+            // defrag free spaces.
+            defragmentFreeSpaces(freeSpacesInFile);
+
+            // determine if the deleted blob is the beginning of an entry.
+            var foundAsEmptyEntry = freeSpacesInFile.FirstOrDefault(x => x.Offset == entryOffset);
+
+            // if so, change the TYPE byte to 0.
+            if (foundAsEmptyEntry != null)
+                updateEntryType(entryOffset);
+        }
+
         private void defragmentFreeSpaces(List<FreeSpaceEntry> freeSpaces)
         {
             // index of entry.  NOTE: Delete in reverse order so each index does not affect the next.
             var entriesToDelete = new List<int>();
             var entriesToAmend = new List<(int index, uint newLength)>();
-            var orderedFreeSpaceMap = new List<MemoryBlock>();
-            var changesCount = 0;
+            var orderedFreeSpaceMap = freeSpaceMap(freeSpaces).OrderBy(x => x.StartOffset).ToList();
+            var offsetToUnorderedMap = mapOffsetToUnOrderedIndex(orderedFreeSpaceMap, freeSpaces);
 
-            do
+            entriesToDelete.Clear();
+            entriesToAmend.Clear();
+
+            // ideally this re-iterates or does what ever it needs to so we only have to hit the DB file ONCE.
+            var results = findFragmentations();
+
+            if (results != null)
             {
-                // reset
-                changesCount = 0;
-                entriesToDelete.Clear();
-                entriesToAmend.Clear();
-                orderedFreeSpaceMap = freeSpaceMap(freeSpaces).OrderBy(x => x.StartOffset).ToList();
+                // needs to happen before deletes, so the index don't change.
+                processInMemoryUpdates(results.Value.updates);
 
-                // ideally this re-iterates or does what ever it needs to so we only have to hit the DB file ONCE.
-                var results = findFragmentations();
+                // persist the minimum changes necessary to disk. Also needs to happen before deletes in memory.
+                processStreamUpdates(results.Value.updates);
 
-                if(results != null)
-                {
-                    // needs to happen before deletes, so the index don't change.
-                    processInMemoryUpdates(results.Value.updates);
-
-                    // persiste the minimum changes necessary to disk. Also needs to happen before deletes in memory.
-                    processStreamUpdates(results.Value.updates);
-
-                    // must happen after updates do we don't change indexes of update entries.                    
-                    processInMemoryDeletes(results.Value.deletes); 
-                }
+                // must happen after updates do we don't change indexes of update entries.                    
+                processInMemoryDeletes(results.Value.deletes);
             }
-            while (changesCount > 0);
 
             #region local helper methods
 
@@ -175,6 +208,21 @@ namespace BinaryDocumentDb
                 return freeSpaces.Select(x => new MemoryBlock(x.Offset, x.Offset + x.Length - 1)).ToList();
             }
 
+            Dictionary<uint, int> mapOffsetToUnOrderedIndex(List<MemoryBlock> orderedFreeSpaceMap, List<FreeSpaceEntry> freeSpaces)
+            {
+                var map = new Dictionary<uint, int>();
+
+                for (int orderedIndex = 0; orderedIndex < orderedFreeSpaceMap.Count; orderedIndex++)
+                {
+                    var orderedItem = orderedFreeSpaceMap[orderedIndex];
+                    var unorderedIndex = freeSpaces.FirstIndexOf(x => x.Offset == orderedItem.StartOffset);
+
+                    map.Add(orderedItem.StartOffset, unorderedIndex);
+                }
+
+                return map;
+            }
+
             (IEnumerable<int> deletes, IEnumerable<(int idxToUpdate, uint newLength)> updates)? findFragmentations()
             {
                 // idiot check
@@ -184,71 +232,81 @@ namespace BinaryDocumentDb
                 var updates = new List<(int idxToUpdate, uint newLength)>();
 
                 int selectedFreeSpaceIndex = 0;
-
+               
                 do
                 {
-                    var freeSpace = orderedFreeSpaceMap[selectedFreeSpaceIndex];
-                    var newStartOffset = freeSpace.StartOffset;
-                    var newEndOffset = freeSpace.EndOffset;
-
-                    int compareFreeSpaceIndex = selectedFreeSpaceIndex + 1;
-                    var compareFreeSpace = orderedFreeSpaceMap[compareFreeSpaceIndex];
-
-                    if (freeSpace.EndOffset + 1 == compareFreeSpace.StartOffset)
+                    // idiot check
+                    if (selectedFreeSpaceIndex < (offsetToUnorderedMap.Count - 1))
                     {
-                        // defrag needed.  We can count this as one merge, but there may be others.
-                        // We than therefore iterate over the next one(s) to see if there are more.
-                        // in reality the most we are likely to ever see is 3 in a row. (space)(entry just deleted)(space)
+                        var freeSpace = orderedFreeSpaceMap[selectedFreeSpaceIndex];
+                        var freeSpaceOriginalListIndex = offsetToUnorderedMap[freeSpace.StartOffset]; //freeSpaces.FirstIndexOf(x => x.Offset == freeSpace.StartOffset);
 
-                        newEndOffset = compareFreeSpace.EndOffset;
+                        var newStartOffset = freeSpace.StartOffset;
+                        var newEndOffset = freeSpace.EndOffset;
 
-                        deletes.Add(compareFreeSpaceIndex);
+                        int compareFreeSpaceIndex = selectedFreeSpaceIndex + 1;
+                        var compareFreeSpace = orderedFreeSpaceMap[compareFreeSpaceIndex];
 
-                        var tryNext = false;
-                        var skipEntriesCount = 1;
-                        var nextIndex = compareFreeSpaceIndex + 1;
-                        do
+                        var compareFreeSpaceOriginalListIndex = offsetToUnorderedMap[compareFreeSpace.StartOffset];
+
+                        if (freeSpace.EndOffset + 1 == compareFreeSpace.StartOffset)
                         {
-                            tryNext = false;
-                            MemoryBlock? nextFreeSpace = orderedFreeSpaceMap.Count > nextIndex ? orderedFreeSpaceMap[nextIndex] : null;
+                            // defrag needed.  We can count this as one merge, but there may be others.
+                            // We than therefore iterate over the next one(s) to see if there are more.
+                            // in reality the most we are likely to ever see is 3 in a row. (space)(entry just deleted)(space)
 
-                            if (nextFreeSpace != null)
+                            newEndOffset = compareFreeSpace.EndOffset;
+
+                            deletes.Add(compareFreeSpaceOriginalListIndex);
+
+                            var tryNext = false;
+                            var skipEntriesCount = 1;
+                            var nextIndex = compareFreeSpaceIndex + 1;
+                            do
                             {
-                                if (compareFreeSpace.EndOffset + 1 == nextFreeSpace.StartOffset)
+                                tryNext = false;
+                                MemoryBlock? nextFreeSpace = orderedFreeSpaceMap.Count > nextIndex ? orderedFreeSpaceMap[nextIndex] : null;
+
+                                if (nextFreeSpace != null)
                                 {
-                                    compareFreeSpaceIndex++;
-                                    compareFreeSpace = orderedFreeSpaceMap[compareFreeSpaceIndex];
+                                    if (compareFreeSpace.EndOffset + 1 == nextFreeSpace.StartOffset)
+                                    {
+                                        compareFreeSpaceIndex++;
+                                        compareFreeSpace = orderedFreeSpaceMap[compareFreeSpaceIndex];
 
-                                    deletes.Add(nextIndex);
+                                        var nextFreeSpaceOriginalListIndex = offsetToUnorderedMap[nextFreeSpace.StartOffset];
 
-                                    nextIndex++;
-                                    skipEntriesCount++;
+                                        deletes.Add(nextFreeSpaceOriginalListIndex);
 
-                                    newEndOffset = compareFreeSpace.EndOffset;
+                                        nextIndex++;
+                                        skipEntriesCount++;
 
-                                    tryNext = true;
+                                        newEndOffset = compareFreeSpace.EndOffset;
+
+                                        tryNext = true;
+                                    }
                                 }
                             }
+                            while (tryNext);
+
+                            var calcLength = (newEndOffset - newStartOffset) + 1;
+
+                            updates.Add((freeSpaceOriginalListIndex, calcLength));
+
+                            selectedFreeSpaceIndex += skipEntriesCount;
                         }
-                        while (tryNext);
-
-                        var calcLength = (newEndOffset - newStartOffset) + 1;
-
-                        updates.Add((selectedFreeSpaceIndex, calcLength));
-
-                        selectedFreeSpaceIndex += skipEntriesCount;
                     }
-
                     selectedFreeSpaceIndex++;
                 }
                 while (selectedFreeSpaceIndex < orderedFreeSpaceMap.Count);
+
 
                 return (deletes, updates);
             }
 
             void processInMemoryDeletes(IEnumerable<int> indexesToDelete)
             {
-                foreach (var idx in indexesToDelete.OrderByDescending(x=>x))
+                foreach (var idx in indexesToDelete.OrderByDescending(x => x))
                     freeSpaces.RemoveAt(idx);
             }
 
@@ -317,6 +375,48 @@ namespace BinaryDocumentDb
                 fs.Seek(0, SeekOrigin.End); // seek end of file as we've no more data.
         }
 
+        private BlobEntry readBlob(uint offset)
+        {
+            fs.Seek(offset, SeekOrigin.Begin);
+
+            var typeByte = readByte();
+            if (typeByte != 1)
+                throw new Exception("Offset into file stream doesn't point to a blob entry.");
+
+            var numBytes = readUInt() - 4;
+            if (numBytes < 0)
+                throw new Exception("Can't read less than zero byte! Are we actually poining at a blob entry?");
+
+            var key = readUInt();
+
+            var bytes = new byte[numBytes];
+            var readBytesCount = fs.Read(bytes, 0, bytes.Length);
+            if (readBytesCount != numBytes)
+                throw new Exception("Number of bytes read in does not match the expected length, suggesting bad data in the stream.  Sorry.");
+
+            return new BlobEntry(offset, key, bytes);
+        }
+
+        private uint readEntryLengthOnly(uint offset)
+        {
+            fs.Seek(offset, SeekOrigin.Begin);
+
+            var typeByte = readByte();
+
+            // as its a byte, no need to test for <0.  
+            // We know there are only 2 types. and those are 0 and 1.  So anything larger than 1...
+            if (typeByte > 1)
+                throw new Exception("Doesn't look like the offset provided points to the beginning of an entry?");
+
+            return readUInt();
+        }
+
+        private void updateEntryType(uint entryOffset)
+        {
+            fs.Seek(entryOffset, SeekOrigin.Begin);
+            writeByte(0);
+        }
+
         private void processBlobEntry(Dictionary<uint, uint> keyToPhysicalOffsetInFile)
         {
             var rawLength = readUInt();
@@ -330,7 +430,7 @@ namespace BinaryDocumentDb
 
                 // seek end of blob, without accidentally adding a zero byte to the stream?
                 var offset = fs.Position + rawLength - 9;
-                
+
                 fs.Seek(offset, SeekOrigin.Begin);
             }
             else
@@ -458,8 +558,6 @@ namespace BinaryDocumentDb
             // NOTE: length is the number of bytes of free space AFTER the 'length' entry on disk.
             freeSpacesInFile.Add(new FreeSpaceEntry(position, remainingDataSpace));
         }
-
-
 
         #endregion
     }
