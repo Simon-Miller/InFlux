@@ -383,7 +383,7 @@ namespace BinaryDocumentDb
             if (typeByte != 1)
                 throw new Exception("Offset into file stream doesn't point to a blob entry.");
 
-            var numBytes = readUInt() - 4;
+            var numBytes = readUInt() - HEADER_BYTES_SIZE - LENGTH_VALUE_BYTES_SIZE - KEY_VALUE_BYTES_SIZE; 
             if (numBytes < 0)
                 throw new Exception("Can't read less than zero byte! Are we actually poining at a blob entry?");
 

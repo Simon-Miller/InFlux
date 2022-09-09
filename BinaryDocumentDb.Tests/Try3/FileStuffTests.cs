@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-namespace BinaryDocumentDb.Tests.Try3
+﻿namespace BinaryDocumentDb.Tests.Try3
 {
     [TestClass]
     public class FileStuffTests
@@ -280,7 +279,7 @@ namespace BinaryDocumentDb.Tests.Try3
             // GOTCHA!  theory: Looks like the entry to be updated has the wrong offset? Or not being called?
             //          NOTE: Appears the free space entry doesn't appear to have updated?
             //              theory: Wrong index updated, and later gets deleted?
-            
+
             //              NOTE: turns out there was confusion between original list, and a sorted one, where we need
             //                    indexes into the original list, not the sorted list that gets thrown away.
 
@@ -312,9 +311,7 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.AreEqual(1, freespace.Count); // should defrag
 
             // GOTCHA! observation: Seeing 2 x deletes both pointing at same index??
-            //  
-
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] 
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 20,0,0,0,   1, 10,0,0,0, 1,0,0,0, 123,  0, 5,0,0,0 }));
         }
 
@@ -339,9 +336,6 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.AreEqual(0, index.Count);
             Assert.AreEqual(1, freespace.Count); // should defrag
 
-            // GOTCHA! observation: Seeing 2 x deletes both pointing at same index??
-            //  
-
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 15,0,0,0,   1, 10,0,0,0, 1,0,0,0, 123}));
         }
@@ -349,14 +343,78 @@ namespace BinaryDocumentDb.Tests.Try3
         [TestMethod]
         public void Can_delete_entry_in_middle_of_two_other_entries()
         {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                1, 12,0,0,0, 1,0,0,0, 1,2,3, // blob entry
 
+                1, 12,0,0,0, 2,0,0,0, 4,5,6, // blob entry in middle to delete.
+
+                1, 12,0,0,0, 3,0,0,0, 7,8,9, // blob entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.DeleteBlob(index, freespace, 2);
+
+            // Assert
+            Assert.AreEqual(2, index.Count);
+            Assert.AreEqual(1, freespace.Count); // should defrag
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 1, 12,0,0,0, 1,0,0,0, 1,2,3,   0, 12,0,0,0, 2,0,0,0, 4,5,6,   1, 12,0,0,0, 3,0,0,0, 7,8,9}));
         }
 
+        [TestMethod]
+        public void Can_delete_entry_at_beginning_followed_by_another_entry()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                1, 10,0,0,0, 1,0,0,0, 123, // blob entry to delete
+
+                1, 10,0,0,0, 2,0,0,0, 234, // blob entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.DeleteBlob(index, freespace, 1);
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(1, freespace.Count); // should defrag
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 10,0,0,0, 1,0,0,0, 123,   1, 10,0,0,0, 2,0,0,0, 234}));
+        }
 
         [TestMethod]
         public void Can_read_existing_blob()
         {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                1, 10,0,0,0, 1,0,0,0, 123, // blob entry to delete
 
+                1, 10,0,0,0, 2,0,0,0, 234, // blob entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            var result = instance.ReadBlob(index, 2);
+
+            Assert.AreEqual(10u, result.offset);
+            Assert.AreEqual(2u, result.key);
+
+            // Gotcha!  Code things more bytes should be read than actually did.  Read was 1 byte (correct) expected 6? (wrong)
+            // theory:  Must be a calculation for number of bytes to read, and if not, there needs to be one! 
+            Assert.IsTrue(IEnumerableComparer.AreEqual(result.data, new byte[] { 234 }));
         }
     }
 }
