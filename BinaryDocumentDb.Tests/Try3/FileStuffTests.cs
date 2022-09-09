@@ -76,16 +76,16 @@ namespace BinaryDocumentDb.Tests.Try3
             // Arrange
             var fs = new FakeVirtualFileStream(new byte[]
             {
-                0, 5,0,0,0,    // empty 5 bytes entry
-                0, 6,0,0,0,0,  // empty 6 bytes entry
-                0, 7,0,0,0,0,0,// empty 7 bytes entry
+                0, 5,0,0,0,    // 00: empty 5 bytes entry
+                0, 6,0,0,0,0,  // 05: empty 6 bytes entry
+                0, 7,0,0,0,0,0,// 11: empty 7 bytes entry
 
-                1, 10,0,0,0, 1,0,0,0, 123, // blob entry in middle.
+                1, 10,0,0,0, 1,0,0,0, 123,  // 18: blob entry in middle.
 
-                0, 5,0,0,0,    // empty 5 bytes entry
-                0, 6,0,0,0,0,  // empty 6 bytes entry
+                0, 5,0,0,0,    // 28: empty 5 bytes entry
+                0, 6,0,0,0,0,  // 33: empty 6 bytes entry
 
-                1, 12,0,0,0, 2,0,0,0, 1,2,3 // blob entry at end.
+                1, 12,0,0,0, 2,0,0,0, 1,2,3 // 38: blob entry at end.
             });
 
             var instance = new FileStuff(fs);
@@ -93,13 +93,22 @@ namespace BinaryDocumentDb.Tests.Try3
 
             Assert.AreEqual(2, freespace.Count);
 
+            Assert.AreEqual(00u, freespace[0].Offset);
+            Assert.AreEqual(18u, freespace[0].Length);
+            Assert.AreEqual(28u, freespace[1].Offset);
+            Assert.AreEqual(11u, freespace[1].Length);
+
+            Assert.AreEqual(2, index.Count);
+            Assert.AreEqual(18u, index[1u]);
+            Assert.AreEqual(39u, index[2u]);
+
             // Gotcha! Off by one?  reports 17 when should be 18?
             // Gotcha! 4th free space entry NOT merged with 5th?
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
-                { 0,18,0,0,0, 0,6,0,0,0,0, 0,7,0,0,0,0,0, // defrag'd entry with old data unchanged
-                  1, 10,0,0,0, 1,0,0,0, 123,              // existing entry unchanged
-                  0, 11,0,0,0, 0,6,0,0,0,0,               // defrag'd entry with old data unchanged
-                  1, 12,0,0,0, 2,0,0,0, 1,2,3             // existing entry unchanged
+                { 0,18,0,0,0, 0,6,0,0,0,0, 0,7,0,0,0,0,0, // 00: defrag'd entry with old data unchanged
+                  1, 10,0,0,0, 1,0,0,0, 123,              // 18: existing entry unchanged
+                  0, 11,0,0,0, 0,6,0,0,0,0,               // 28: defrag'd entry with old data unchanged
+                  1, 12,0,0,0, 2,0,0,0, 1,2,3             // 39: existing entry unchanged
                 }));
         }
 
@@ -121,10 +130,11 @@ namespace BinaryDocumentDb.Tests.Try3
             var key = instance.InsertBlob(index, freespace, new byte[] { 1, 2, 3 });
 
             // Assert
-            Assert.AreEqual(1, index.Count);
             Assert.AreEqual(1, freespace.Count);
+            Assert.AreEqual(5u, freespace[0].Length);
+
+            Assert.AreEqual(1, index.Count);            
             Assert.AreEqual(5u, index[key]);
-            Assert.AreEqual(17, fs.Length); // free space entry + blob entry with 3 data bytes
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 5, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
         }
@@ -184,8 +194,10 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.AreEqual(0, numberOfBlobsBeforeAct);
 
             Assert.AreEqual(1, freespace.Count);
-            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(0u, freespace[0].Offset);
+            Assert.AreEqual(5u, freespace[0].Length);
 
+            Assert.AreEqual(1, index.Count);
             Assert.AreEqual(5u, index[key]);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 5, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
@@ -215,8 +227,10 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.AreEqual(0, numberOfBlobsBeforeAct);
 
             Assert.AreEqual(1, freespace.Count);
-            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(12u, freespace[0].Offset);
+            Assert.AreEqual(8u, freespace[0].Length);
 
+            Assert.AreEqual(1, index.Count);
             Assert.AreEqual(0u, index[key]);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, 0, 8, 0, 0, 0, 0, 0, 0 }));
@@ -246,11 +260,14 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.AreEqual(0, numberOfBlobsBeforeAct);
 
             Assert.AreEqual(1, freespace.Count);
-            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(0u, freespace[0].Offset);
+            Assert.AreEqual(14u, freespace[0].Length);
 
+            Assert.AreEqual(1, index.Count);
             Assert.AreEqual(14u, index[key]);
 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] 
+                { 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
         }
 
         [TestMethod]
@@ -273,6 +290,8 @@ namespace BinaryDocumentDb.Tests.Try3
             // Assert
             Assert.AreEqual(0, index.Count);
             Assert.AreEqual(1, freespace.Count); // should defrag
+            Assert.AreEqual(00u, freespace[0].Offset);
+            Assert.AreEqual(15u, freespace[0].Length);
 
             // GOTCHA!  theory: Looks like empty entry got overwritten instead of the blob entry?
             //          NOTE: walking through the code, I can see its actually the defragment routine?
@@ -309,7 +328,10 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(0, index.Count);
+
             Assert.AreEqual(1, freespace.Count); // should defrag
+            Assert.AreEqual(00u, freespace[0].Offset);
+            Assert.AreEqual(20u, freespace[0].Length);
 
             // GOTCHA! observation: Seeing 2 x deletes both pointing at same index??
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
@@ -335,7 +357,10 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(0, index.Count);
+
             Assert.AreEqual(1, freespace.Count); // should defrag
+            Assert.AreEqual(0u, freespace[0].Offset);
+            Assert.AreEqual(15u, freespace[0].Length);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 15,0,0,0,   1, 10,0,0,0, 1,0,0,0, 123}));
@@ -362,7 +387,12 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(2, index.Count);
+            Assert.AreEqual(00u, index[1]);
+            Assert.AreEqual(24u, index[3]);
+
             Assert.AreEqual(1, freespace.Count); // should defrag
+            Assert.AreEqual(12u, freespace[0].Offset);
+            Assert.AreEqual(12u, freespace[0].Length);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 1, 12,0,0,0, 1,0,0,0, 1,2,3,   0, 12,0,0,0, 2,0,0,0, 4,5,6,   1, 12,0,0,0, 3,0,0,0, 7,8,9}));
@@ -387,7 +417,11 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(10u, index[2]);
+
             Assert.AreEqual(1, freespace.Count); // should defrag
+            Assert.AreEqual(00u, freespace[0].Offset);
+            Assert.AreEqual(10u, freespace[0].Length);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 10,0,0,0, 1,0,0,0, 123,   1, 10,0,0,0, 2,0,0,0, 234}));
@@ -437,7 +471,13 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(5u, index[1]);
+
             Assert.AreEqual(2, freespace.Count);
+            Assert.AreEqual(00u, freespace[0].Offset);
+            Assert.AreEqual(05u, freespace[0].Length);
+            Assert.AreEqual(15u, freespace[1].Offset);
+            Assert.AreEqual(05u, freespace[1].Length);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 5,0,0,0,   1, 10,0,0,0, 1,0,0,0, 234,   0, 5,0,0,0}));
@@ -464,7 +504,13 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(5u, index[1]);
+
             Assert.AreEqual(2, freespace.Count); // defrag'd?
+            Assert.AreEqual(0u, freespace[0].Offset);
+            Assert.AreEqual(5u, freespace[0].Length);
+            Assert.AreEqual(15u, freespace[1].Offset);
+            Assert.AreEqual(10u, freespace[1].Length);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 5,0,0,0,   1, 10,0,0,0, 1,0,0,0, 7,   0, 10,0,0,0,   0, 5,0,0,0}));
@@ -491,7 +537,11 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(15u, index[1]);
+
             Assert.AreEqual(1, freespace.Count); // defrag'd?
+            Assert.AreEqual(00u, freespace[0].Offset);
+            Assert.AreEqual(15u, freespace[0].Length);
 
             // GOTCHA!  Wow!  Not an easy one.  defrag shows 1 entry of 27 bytes.  So it seems to include original free space too?
             //          theory: We don't remove the free space entry from the list of free spaces when we fill it with data.
@@ -523,11 +573,17 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(15u, index[1]);
+
             Assert.AreEqual(2, freespace.Count); // defrag'd + new one
+            Assert.AreEqual(00u, freespace[0].Offset);
+            Assert.AreEqual(15u, freespace[0].Length);
+            Assert.AreEqual(27u, freespace[1].Offset);
+            Assert.AreEqual(05u, freespace[1].Length);
 
             // GOTCHA!  Either data error below, or found bug. Ahh (35 bytes free space?), same problem as previous test?
             // theory: Do we not delete the free space entry we're filling from the list of free spaces?
-            
+
             // NOTE: this seems to have fixed it, but because I did a little DRY refactoring in the process, I need to run previous tests
             // to ensure they still work.
 
@@ -553,7 +609,11 @@ namespace BinaryDocumentDb.Tests.Try3
 
             // Assert
             Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(15u, index[1]);
+
             Assert.AreEqual(1, freespace.Count); // defrag'd
+            Assert.AreEqual(0u, freespace[0].Offset);
+            Assert.AreEqual(15u, freespace[0].Length);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 15,0,0,0,   0, 10,0,0,0, 1,0,0,0, 123,   1, 12,0,0,0, 1,0,0,0, 1,2,3 }));
