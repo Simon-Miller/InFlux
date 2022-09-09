@@ -1,4 +1,5 @@
-﻿namespace BinaryDocumentDb.Tests.Try3
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+namespace BinaryDocumentDb.Tests.Try3
 {
     [TestClass]
     public class FileStuffTests
@@ -415,6 +416,147 @@
             // Gotcha!  Code things more bytes should be read than actually did.  Read was 1 byte (correct) expected 6? (wrong)
             // theory:  Must be a calculation for number of bytes to read, and if not, there needs to be one! 
             Assert.IsTrue(IEnumerableComparer.AreEqual(result.data, new byte[] { 234 }));
+        }
+
+        [TestMethod]
+        public void Can_update_blob_with_exact_size_unchanged()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                // empty 5 bytes entry
+                1, 10,0,0,0, 1,0,0,0, 123, // blob entry to delete
+                0, 5,0,0,0,                // empty 5 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 234 });
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(2, freespace.Count);
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 5,0,0,0,   1, 10,0,0,0, 1,0,0,0, 234,   0, 5,0,0,0}));
+        }
+
+        [TestMethod]
+        public void Can_update_blob_with_smaller_content_creating_an_empty_space_entry()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                        // empty 5 bytes entry
+                1, 15,0,0,0, 1,0,0,0, 1,2,3,4,5,6, // blob entry to delete
+                0, 5,0,0,0,                        // empty 5 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // GOTCHA! Did find the filestream was pointing to the wrong position.
+
+            // Act
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 7 }); // 5 less bytes, so creates an empty space.  But gets defrag'd?
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(2, freespace.Count); // defrag'd?
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 5,0,0,0,   1, 10,0,0,0, 1,0,0,0, 7,   0, 10,0,0,0,   0, 5,0,0,0}));
+        }
+
+        [TestMethod]
+        public void Can_update_blob_with_larger_content_into_empty_space_of_exact_same_size()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                        // empty 5 bytes entry
+                1, 10,0,0,0, 1,0,0,0, 123,         // blob entry to delete
+                0, 12,0,0,0, 0,0,0,0,0,0,0         // empty 5 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // GOTCHA! Found logic error in picking the routine to handle this scenario.
+
+            // Act
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 1,2,3 });
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(1, freespace.Count); // defrag'd?
+
+            // GOTCHA!  Wow!  Not an easy one.  defrag shows 1 entry of 27 bytes.  So it seems to include original free space too?
+            //          theory: We don't remove the free space entry from the list of free spaces when we fill it with data.
+            //          note:  that worked!
+
+            // note: found an error in the data below, where the original blob entry is turned into an empty space entry, and I'd not
+            //       accounted for that.  But that is right, and then the defrag simply expands the first entry into this space.
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 15,0,0,0,   0, 10,0,0,0, 1,0,0,0, 123,   1, 12,0,0,0, 1,0,0,0, 1,2,3 }));
+        }
+
+        [TestMethod]
+        public void Can_update_blob_with_larger_content_into_empty_space_create_a_smaller_empty_space_entry()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                          // empty 5 bytes entry
+                1, 10,0,0,0, 1,0,0,0, 123,           // blob entry to delete
+                0, 17,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0 // empty 5 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 1, 2, 3 });
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(2, freespace.Count); // defrag'd + new one
+
+            // GOTCHA!  Either data error below, or found bug. Ahh (35 bytes free space?), same problem as previous test?
+            // theory: Do we not delete the free space entry we're filling from the list of free spaces?
+            
+            // NOTE: this seems to have fixed it, but because I did a little DRY refactoring in the process, I need to run previous tests
+            // to ensure they still work.
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 15,0,0,0,   0, 10,0,0,0, 1,0,0,0, 123,   1, 12,0,0,0, 1,0,0,0, 1,2,3,   0,5,0,0,0 }));
+        }
+
+        [TestMethod]
+        public void Can_update_blob_with_larger_content_onto_end_of_stream()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                          // empty 5 bytes entry
+                1, 10,0,0,0, 1,0,0,0, 123,           // blob entry to become space entry, and get defrag'd
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 1, 2, 3 });
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(1, freespace.Count); // defrag'd
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 15,0,0,0,   0, 10,0,0,0, 1,0,0,0, 123,   1, 12,0,0,0, 1,0,0,0, 1,2,3 }));
         }
     }
 }
