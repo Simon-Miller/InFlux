@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-namespace BinaryDocumentDb.Tests.Try3
+﻿namespace BinaryDocumentDb.Tests
 {
     [TestClass]
     public class FileStuffTests
@@ -133,7 +132,7 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.AreEqual(1, freespace.Count);
             Assert.AreEqual(5u, freespace[0].Length);
 
-            Assert.AreEqual(1, index.Count);            
+            Assert.AreEqual(1, index.Count);
             Assert.AreEqual(5u, index[key]);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 5, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
@@ -266,7 +265,7 @@ namespace BinaryDocumentDb.Tests.Try3
             Assert.AreEqual(1, index.Count);
             Assert.AreEqual(14u, index[key]);
 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] 
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
         }
 
@@ -533,7 +532,7 @@ namespace BinaryDocumentDb.Tests.Try3
             // GOTCHA! Found logic error in picking the routine to handle this scenario.
 
             // Act
-            instance.UpdateBlob(index, freespace, 1, new byte[] { 1,2,3 });
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 1, 2, 3 });
 
             // Assert
             Assert.AreEqual(1, index.Count);
