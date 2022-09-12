@@ -443,12 +443,12 @@
             // Act
             var result = instance.ReadBlob(index, 2);
 
-            Assert.AreEqual(10u, result.offset);
-            Assert.AreEqual(2u, result.key);
+            Assert.AreEqual(10u, result.Offset);
+            Assert.AreEqual(2u, result.Key);
 
-            // Gotcha!  Code things more bytes should be read than actually did.  Read was 1 byte (correct) expected 6? (wrong)
+            // Gotcha!  Code thinks more bytes should be read than actually did.  Read was 1 byte (correct) expected 6? (wrong)
             // theory:  Must be a calculation for number of bytes to read, and if not, there needs to be one! 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(result.data, new byte[] { 234 }));
+            Assert.IsTrue(IEnumerableComparer.AreEqual(result.Data, new byte[] { 234 }));
         }
 
         [TestMethod]

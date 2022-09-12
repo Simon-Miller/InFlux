@@ -1,10 +1,13 @@
-﻿using System;
+﻿using BinaryDocumentDb.IO;
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace BinaryDocumentDb
 {
+
+    /// <summary>
+    /// Externally, instances of this class should happen via either DI, or a Factory class.
+    /// </summary>
     internal class BinaryBlobContext : IBinaryDocumentDb
     {
         #region construct / dispose / destruct
@@ -13,35 +16,53 @@ namespace BinaryDocumentDb
         {
             this.config = config;
 
-            this.fs = new VirtualFileStream(config.FilePathAndName);
+            fs = new VirtualFileStream(config.FilePathAndName);
 
-            this.FileOperations = new FileStuff(this.fs);
+            FileOperations = new FileStuff(fs);
 
-            this.FileOperations.ScanFile();
+            (KeyToOffsetDictionary, FreeSpaceEntries) = FileOperations.ScanFile();
         }
 
         private bool isDisposed = false;
 
         public void Dispose()
         {
-            if (this.isDisposed == false)
+            if (isDisposed == false)
             {
-                this.fs.Close();
+                fs.Close();
             }
         }
 
+
         ~BinaryBlobContext()
         {
-            this.Dispose();
+            Dispose();
         }
 
         #endregion
 
-
         private readonly BdDbConfig config;
         private readonly IVirtualFileStream fs;
-
         private readonly FileStuff FileOperations;
 
+        private readonly Dictionary<uint, uint> KeyToOffsetDictionary;
+        private readonly List<FreeSpaceEntry> FreeSpaceEntries;
+
+
+        public ExecResponse<uint> Create(byte[] blobData) =>
+            TryCatch.Wrap(() =>
+                FileOperations.InsertBlob(KeyToOffsetDictionary, FreeSpaceEntries, blobData));
+
+        public ExecResponse<IReadOnlyList<byte>> Read(uint blobKey) =>
+            TryCatch.Wrap(() => 
+                FileOperations.ReadBlob(KeyToOffsetDictionary, blobKey).Data);
+
+        public ExecResponse Update(uint key, byte[] blobData) =>
+            TryCatch.Wrap(()=>
+                FileOperations.UpdateBlob(KeyToOffsetDictionary, FreeSpaceEntries, key, blobData));
+
+        public ExecResponse Delete(uint key) =>
+            TryCatch.Wrap(() =>
+                FileOperations.DeleteBlob(KeyToOffsetDictionary, FreeSpaceEntries, key));
     }
 }

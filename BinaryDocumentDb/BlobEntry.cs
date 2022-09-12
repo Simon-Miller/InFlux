@@ -6,14 +6,14 @@ namespace BinaryDocumentDb
     {
         public BlobEntry(uint offset, uint key, IReadOnlyList<byte> data)
         {
-            this.offset = offset;
-            this.key = key;
-            this.data = data;
+            this.Offset = offset;
+            this.Key = key;
+            this.Data = data;
         }
 
-        internal readonly uint offset;
-        internal readonly uint key;
+        internal readonly uint Offset;
+        internal readonly uint Key;
 
-        internal readonly IReadOnlyList<byte> data;
+        internal readonly IReadOnlyList<byte> Data;
     }
 }
