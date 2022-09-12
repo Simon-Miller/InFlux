@@ -1,4 +1,6 @@
-﻿namespace InFlux.Extensions
+﻿using System.Collections.Generic;
+
+namespace InFlux.Extensions
 {
     /// <summary>
     /// Extension methods for Objects.

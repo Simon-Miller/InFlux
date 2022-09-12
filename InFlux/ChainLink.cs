@@ -1,4 +1,6 @@
-﻿namespace InFlux
+﻿using System;
+
+namespace InFlux
 {
     /// <summary>
     /// Represents the payload of an event, and a callback that a subscriber must call when they're finished 

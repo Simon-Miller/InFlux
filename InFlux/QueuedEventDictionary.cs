@@ -1,4 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace InFlux
 {
@@ -32,7 +36,7 @@ namespace InFlux
             this.OnDictionaryCleared.Subscribe((O, N) => this.OnChanged.FireEvent());
         }
 
-        private Dictionary<K, V> dictionary = new();
+        private Dictionary<K, V> dictionary = new Dictionary<K, V>();
 
         /// <summary>
         /// Subscribe or unsubscribe from this event to be informed of any changes to this dictionary,
@@ -40,32 +44,32 @@ namespace InFlux
         /// Call either: Subscribe(ValueChangedResponse{IEnumerable{KeyValuePair{K,V}}})
         /// or: UnSubscribe(Action{ValueChangedResponse{IEnumerable{KeyValuePair{K,V}}})
         /// </summary>
-        public readonly QueuedEvent OnChanged = new();
+        public readonly QueuedEvent OnChanged = new QueuedEvent();
 
         /// <summary>
         /// informs you about any added items to this <see cref="QueuedEventDictionary{K, V}"/>.
         /// Also fires <see cref="OnChanged"/> event.
         /// </summary>
-        public readonly QueuedEvent<KeyValuePair<K, V>> OnItemAdded = new();
+        public readonly QueuedEvent<KeyValuePair<K, V>> OnItemAdded = new QueuedEvent<KeyValuePair<K, V>>();
 
         /// <summary>
         /// informs you about any removed items from this <see cref="QueuedEventDictionary{K, V}"/>.
         /// Also fires <see cref="OnChanged"/> event.
         /// </summary>
-        public readonly QueuedEvent<KeyValuePair<K, V>> OnItemRemoved = new();
+        public readonly QueuedEvent<KeyValuePair<K, V>> OnItemRemoved = new QueuedEvent<KeyValuePair<K, V>>();
 
         /// <summary>
         /// informs you about any items with a given Key being swapped (changed) for a different item
         /// on this <see cref="QueuedEventDictionary{K, V}"/>.
         /// Also fires <see cref="OnChanged"/> event.
         /// </summary>
-        public readonly QueuedEvent<KeyValuePair<K, V>> OnItemChanged = new();
+        public readonly QueuedEvent<KeyValuePair<K, V>> OnItemChanged = new QueuedEvent<KeyValuePair<K, V>>();
 
         /// <summary>
         /// informs you if this <see cref="QueuedEventDictionary{K, V}"/> has all items removed, specifically
         /// to clear the list.  Also fires <see cref="OnChanged"/> event.
         /// </summary>
-        public readonly QueuedEvent<IEnumerable<KeyValuePair<K, V>>> OnDictionaryCleared = new();
+        public readonly QueuedEvent<IEnumerable<KeyValuePair<K, V>>> OnDictionaryCleared = new QueuedEvent<IEnumerable<KeyValuePair<K, V>>>();
 
         /// <summary>
         /// Gets or sets the element at the specified keyin this <see cref="QueuedEventDictionary{K, V}"/>.
@@ -131,7 +135,7 @@ namespace InFlux
         /// <summary>
         /// Gets or sets the element at the specified keyin this <see cref="QueuedEventDictionary{K, V}"/>.
         /// </summary>
-        public object? this[object key]
+        public object this[object key]
         {
             get => ((IDictionary)this.dictionary)[key];
             set
@@ -150,7 +154,7 @@ namespace InFlux
             this.dictionary.Add(key, value);
             this.OnItemAdded.FireEvent(
                 new KeyValuePair<K, V>(
-                    key, default(V)!),
+                    key, default(V)),
                 new KeyValuePair<K, V>(key, value)
             );
         }
@@ -253,7 +257,7 @@ namespace InFlux
         /// <summary>
         /// Adds an item to this <see cref="QueuedEventDictionary{K, V}"/> with given key.
         /// </summary>
-        public void Add(object key, object? value) =>
+        public void Add(object key, object value) =>
             this.Add(new KeyValuePair<K, V>((K)key, (V)value!));
 
         /// <summary>

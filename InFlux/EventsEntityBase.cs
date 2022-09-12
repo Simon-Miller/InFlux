@@ -1,4 +1,7 @@
-﻿using System.Reflection;
+﻿using InFlux.Extensions;
+using System;
+using System.Linq;
+using System.Reflection;
 
 namespace InFlux
 {
@@ -34,14 +37,23 @@ namespace InFlux
                     .Where(x => x.PropertyType.IsGenericType)
                     .ToList();
 
-            genericFieldMembers.Where(f => f
-                .FieldType.IsAssignableTo(typeof(QueuedEventPropertyBase)))
+            // NOTE: was IsAssignableTo, which might mean this doesn't work as expected.
+            //genericFieldMembers.Where(f => f
+            //    .FieldType.IsAssignableFrom(typeof(QueuedEventPropertyBase)))
+            //    .Each(member => this.setupMember(member.GetValue(this)));
+            genericFieldMembers.Where(f => typeof(QueuedEventPropertyBase).IsAssignableFrom(f.FieldType))
                 .Each(member => this.setupMember(member.GetValue(this)));
 
+
+            // NOTE: was IsAssignableTo, which might mean this doesn't work as expected.
+            //genericPropertyMembers.Where(p => p
+            //    .PropertyType.IsNestedAssembly && p
+            //    .PropertyType.IsAssignableFrom(typeof(QueuedEventPropertyBase)))
+            //        .Each(member => this.setupMember(member.GetValue(this)));
             genericPropertyMembers.Where(p => p
-                .PropertyType.IsNestedAssembly && p
-                .PropertyType.IsAssignableTo(typeof(QueuedEventPropertyBase)))
+                .PropertyType.IsNestedAssembly && typeof(QueuedEventPropertyBase).IsAssignableFrom(p.PropertyType))
                     .Each(member => this.setupMember(member.GetValue(this)));
+
 
             genericFieldMembers
                 .Where(f => f.FieldType.GetGenericTypeDefinition() == typeof(QueuedEventList<>))
@@ -73,20 +85,20 @@ namespace InFlux
         /// The idea being you create your own strongly typed event where you can pass on your entity
         /// to your subscribers so they know which entity changed.
         /// </summary>
-        public readonly QueuedEvent<T> EntityChanged = new();
+        public readonly QueuedEvent<T> EntityChanged = new QueuedEvent<T>();
 
         //something isn't right here.  or setupMember is wrong too.
-        private void onMemberValueChanged(object? oldValue, object? newValue) => 
-            this.EntityChanged.FireEvent(default, (T?)this);
+        private void onMemberValueChanged(object oldValue, object newValue) => 
+            this.EntityChanged.FireEvent(default, (T)this);
 
-        private void setupMember(object? member)
+        private void setupMember(object member)
         {
             if (member != null)
                 ((QueuedEventPropertyBase)member).OnValueChanged((oldValue, newValue) =>
                     this.onMemberValueChanged(oldValue, newValue));
         }
 
-        private void setupListMember(object? member)
+        private void setupListMember(object member)
         {
             if (member != null)
             {
@@ -112,14 +124,14 @@ namespace InFlux
         }
 
         private void setupListMemberGeneric<T2>(QueuedEventList<T2> member) =>
-            member?.OnListChanged.Subscribe((O, N) => this.EntityChanged.FireEvent(default, (T?)this));
+            member?.OnListChanged.Subscribe((O, N) => this.EntityChanged.FireEvent(default, (T)this));
 
-        private void setupEventChainListMember(object? member) =>
+        private void setupEventChainListMember(object member) =>
             commonSetupEventChainOrPropMember(member,
                                               () => typeof(EventChainList<>),
                                               nameof(setupEventChainListMemberGeneric));
 
-        private void commonSetupEventChainOrPropMember(object? member, Func<Type> getEventChainOrPropGenericType, string nameOfGenericSetupMethod)
+        private void commonSetupEventChainOrPropMember(object member, Func<Type> getEventChainOrPropGenericType, string nameOfGenericSetupMethod)
         {
             if (member != null)
             {
@@ -143,17 +155,17 @@ namespace InFlux
             member.OnListChanged.Subscribe(chain =>
             {
                 chain.CallbackWhenDone();
-                this.EntityChanged.FireEvent(default, (T?)this);
+                this.EntityChanged.FireEvent(default, (T)this);
             });     
         }
 
-        private void setupEventChainPropertyMember(object? member) =>
+        private void setupEventChainPropertyMember(object member) =>
             commonSetupEventChainOrPropMember(member, 
                                               ()=> typeof(EventChainProperty<>), 
                                               nameof(setupEventChainPropertyMemberGeneric));
 
         private void setupEventChainPropertyMemberGeneric<T2>(EventChainProperty<T2> member) =>        
             member.ValueChangedEventCompleted.Subscribe(() =>
-                this.EntityChanged.FireEvent(default, (T?)this));      
+                this.EntityChanged.FireEvent(default, (T)this));      
     }
 }

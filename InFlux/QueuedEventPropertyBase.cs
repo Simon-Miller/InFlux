@@ -8,7 +8,7 @@
         /// <summary>
         /// When the property value changes, this non generic notification is fired.
         /// </summary>
-        public QueuedEvent ValueChangedNotification { get; init; } = new();
+        public QueuedEvent ValueChangedNotification { get; private set; } = new QueuedEvent();
 
         /// <summary>
         /// Allows a QueuedEventsEntity to listen in on children.

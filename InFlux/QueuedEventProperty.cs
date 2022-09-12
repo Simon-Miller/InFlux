@@ -4,13 +4,13 @@
     /// Non-generic version of delegate representing a change in value from an <paramref name="oldValue" />
     /// to  <paramref name="newValue" />
     /// </summary>
-    public delegate void ValueChangedResponse(object? oldValue, object? newValue);
+    public delegate void ValueChangedResponse(object oldValue, object newValue);
 
     /// <summary>
     /// generic version of delegate representing a change in value from an <paramref name="oldValue"/>
     /// to  <paramref name="newValue" />
     /// </summary>
-    public delegate void ValueChangedResponse<T>(T? oldValue, T? newValue);
+    public delegate void ValueChangedResponse<T>(T oldValue, T newValue);
 
     /// <summary>
     /// Represents a property who's value type is <typeparamref name="T"/>.
@@ -37,7 +37,7 @@
         /// When ever <see cref="Value"/> is set, and conforms to expected event behaviour,
         /// this event fires in a predicatable queued fashion.
         /// </summary>
-        public readonly QueuedEvent<T> ValueChanged = new();
+        public readonly QueuedEvent<T> ValueChanged = new QueuedEvent<T>();
 
         private T value;
 

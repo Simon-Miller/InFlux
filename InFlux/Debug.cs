@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace InFlux
 {
@@ -7,7 +8,7 @@ namespace InFlux
         /// <summary>
         /// output text to the Output window.
         /// </summary>
-        public static void WriteLine(string text, [CallerMemberName] string? caller = null)
+        public static void WriteLine(string text, [CallerMemberName] string caller = null)
         {
             System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToLongTimeString()}:{caller}:{text}");
         }

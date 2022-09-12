@@ -1,4 +1,10 @@
-﻿namespace InFlux
+﻿using InFlux.Extensions;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
+namespace InFlux
 {
     /// <summary>
     /// represents an Event that has no payload data, and the event itself is the message that subscribers will want to hear about.
@@ -8,9 +14,9 @@
     public class QueuedEvent
     {
         private int NextKey = 0;
-        private Dictionary<int, WeakReference<Action>> subscribers = new();
+        private Dictionary<int, WeakReference<Action>> subscribers = new Dictionary<int, WeakReference<Action>>();
 
-        private readonly List<WeakReference<Action>> oneOffSubscribers = new();
+        private readonly List<WeakReference<Action>> oneOffSubscribers = new List<WeakReference<Action>>();
 
         /// <summary>
         /// Add a subscriber to the collection of listeners.  You are returned a KEY you
@@ -38,7 +44,7 @@
             var currentDictionaryValues = subscribers;
 
             // jiggle dictionary so new code is first item in collection.
-            subscribers = new();
+            subscribers = new Dictionary<int, WeakReference<Action>>();
             subscribers.Add(key, new WeakReference<Action>(code));
 
             foreach (var oldKey in currentDictionaryValues.Keys)
@@ -100,15 +106,15 @@
     }
 
     /// <summary>
-    /// represents an Event that has no payload data, and the event itself is the message that subscribers will want to hear about.
+    /// represents an Event that has payload data.
     /// When <see cref="FireEvent"/> is called, all the subscriber code to be called is added to the central event handling <see cref="QueuedActions"/>.
     /// This enforces the order that events are queued, and thus fired, making for a far more predictable sequence in firing of events.
     /// </summary>
     public class QueuedEvent<T>
     {
         private int NextKey = 0;
-        private Dictionary<int, WeakReference<ValueChangedResponse<T>>> subscribers = new();
-        private readonly List<WeakReference<ValueChangedResponse<T>>> oneOffSubscribers = new();
+        private Dictionary<int, WeakReference<ValueChangedResponse<T>>> subscribers = new Dictionary<int, WeakReference<ValueChangedResponse<T>>>();
+        private readonly List<WeakReference<ValueChangedResponse<T>>> oneOffSubscribers = new List<WeakReference<ValueChangedResponse<T>>>();
 
         /// <summary>
         /// Add a subscriber to the collection of listeners.  You are returned a KEY you
@@ -136,7 +142,7 @@
             var currentDictionaryValues = subscribers;
 
             // jiggle dictionary so new code is first item in collection.
-            subscribers = new();
+            subscribers = new Dictionary<int, WeakReference<ValueChangedResponse<T>>>();
             subscribers.Add(key, new WeakReference<ValueChangedResponse<T>>(code));
 
             foreach (var oldKey in currentDictionaryValues.Keys)
@@ -166,7 +172,7 @@
         {
             bool removed = false;
 
-            subscribers.GetAllLiveEntries().Each(entry => 
+            subscribers.GetAllLiveEntries().Each(entry =>
             {
                 subscribers.Remove(entry.Key); 
                 removed = true; 
@@ -179,15 +185,17 @@
         /// cause all subscribers to hear about this event. In queued order.
         /// </summary>
         [DebuggerStepThrough]
-        public void FireEvent(T? oldValue, T? newValue)
+        public void FireEvent(T oldValue, T newValue)
         {
-            var(deadSubscriptions, liveSubscriptions) = subscribers.FilterSubscriptions(codeWrapper: eventHandler => invokeThe(eventHandler));
-
+            var result = subscribers.FilterSubscriptions(codeWrapper: eventHandler => invokeThe(eventHandler));
+            
             // add loyal subscribers before the one-offs, just because we like them :-)
-            QueuedActions.AddRange(liveSubscriptions);
+            QueuedActions.AddRange(result.LiveSubscriptions);
+
+            var deadSubscriptions = result.DeadSubscriptionIDs;
 
             // cleanup dead subscribers
-            if(deadSubscriptions.Count > 0)
+            if (deadSubscriptions.Count > 0)
                 deadSubscriptions.Each(deadSubscription => subscribers.Remove(deadSubscription));
 
             // now deal with one-off subscriptions .
@@ -235,7 +243,7 @@
             var output = new List<T>();
 
             foreach (var entry in dictionary)
-                if (entry.Value.TryGetTarget(out T? value) && value != null)
+                if (entry.Value.TryGetTarget(out T value) && value != null)
                     output.Add(value);
 
             return output;
@@ -251,7 +259,7 @@
             var output = new List<Action>();
 
             foreach (var reference in collection)
-                if (reference.TryGetTarget(out Action? code) && code is not null)
+                if (reference.TryGetTarget(out Action code) && code != null)
                     output.Add(code);
 
             return output;
@@ -262,7 +270,7 @@
         /// </summary>
         internal static IEnumerable<KeyValuePair<int, WeakReference<T>>> GetAllLiveEntries<T>(this Dictionary<int, WeakReference<T>> dictionary)
             where T : class =>
-                dictionary.Where(entry => entry.Value.TryGetTarget(out T? _));
+                dictionary.Where(entry => entry.Value.TryGetTarget(out T _));
 
         /// <summary>
         /// returns a filtered collection, but you'll want to consider only keeping weak references to the actions returned.
@@ -307,6 +315,17 @@
             return liveSubscriptions;
         }
 
-        internal record struct FilterResult(List<int> DeadSubscriptionIDs, List<Action> LiveSubscriptions);
+        internal class FilterResult
+        {
+            public FilterResult(List<int> deadSubscriptionIDs, List<Action> liveSubscriptions)
+            {
+                DeadSubscriptionIDs = deadSubscriptionIDs;
+                LiveSubscriptions = liveSubscriptions;
+            }
+
+            internal readonly List<int> DeadSubscriptionIDs;
+
+            internal readonly List<Action> LiveSubscriptions;
+        }
     }
 }

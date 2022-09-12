@@ -44,7 +44,7 @@
             if (inst1.Event.DebugSubscriptions.Count > 0)
             {
                 // debug showing some kind of error in chain.
-                inst1.Event.DebugSubscriptions[0].callSubscription();
+                inst1.Event.DebugSubscriptions[0].CallSubscription();
 
                 /* There's no way of knowing exactly, and repeated calls to the event causes
                  * it to reset each time.  Therefore you can only test a chain immediately after

@@ -1,4 +1,9 @@
-﻿namespace InFlux
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
+namespace InFlux
 {
     /// <summary>
     /// Frustrating as it is, neither traditional events, or QueuedEvents offer solid knowledge to the 
@@ -14,18 +19,18 @@
     public partial class EventChain<T>
     {
         private int subId = 0;
-        private readonly Dictionary<int, Action<ChainLink<T>>> subscriptions = new();
-        private readonly List<Action<ChainLink<T>>> oneOffSubscriptions = new();
+        private readonly Dictionary<int, Action<ChainLink<T>>> subscriptions = new Dictionary<int, Action<ChainLink<T>>>();
+        private readonly List<Action<ChainLink<T>>> oneOffSubscriptions = new List<Action<ChainLink<T>>>();
 
         /// <summary>
         /// Called when the <see cref="FireEvent(T, Action)"/> method is about to process the event the chain.
         /// </summary>
-        public readonly QueuedEvent OnBeforeEvent = new();
+        public readonly QueuedEvent OnBeforeEvent = new QueuedEvent();
 
         /// <summary>
         /// Called when the <see cref="FireEvent(T, Action)"/> method has completed the chain.
         /// </summary>
-        public readonly QueuedEvent OnEventCompleted = new();
+        public readonly QueuedEvent OnEventCompleted = new QueuedEvent();
 
         /// <summary>
         /// Add a subscriber to the collection of listeners.  You are returned a KEY you
@@ -82,7 +87,7 @@
         /// back that they have completed.  Completed chains are removed from this list.  Therefore, if you're wondering why your
         /// chain event has not complete, it will be because these entries have not responded to say they have completed.
         /// </summary>
-        public readonly List<DebugSubscription> DebugSubscriptions = new();
+        public readonly List<DebugSubscription> DebugSubscriptions = new List<DebugSubscription>();
         // POPULATE THIS ABOVE LIST (DebugSubscriptions).
         // I was thinking that with all subscriptions we generate an index as we fire the event
         // we generate a DebugSubscription and add to the collection.  As they respond,
@@ -97,7 +102,7 @@
         /// If you want an event without the callbacks, try using a <see cref="QueuedEvent"/> instead.</para>
         /// </summary>
         [DebuggerStepThrough]
-        public void FireEvent(T payload, Action? callbackWhenDone)
+        public void FireEvent(T payload, Action callbackWhenDone)
         {
             this.OnBeforeEvent.FireEvent();
 
@@ -146,7 +151,7 @@
             this.oneOffSubscriptions.Clear();
 
             ChainLink<T> generatePayloadForSubscriber(int debugId) =>
-                new(payload, () => callbackFromSubscription(debugId));
+                new ChainLink<T>(payload, () => callbackFromSubscription(debugId));
 
             void callbackFromSubscription(int debugId)
             {

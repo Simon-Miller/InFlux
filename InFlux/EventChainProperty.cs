@@ -1,4 +1,7 @@
-﻿namespace InFlux
+﻿using System;
+using System.Diagnostics;
+
+namespace InFlux
 {
     /// <summary>
     /// Gives you a really flexible and reliable property, where changes
@@ -16,9 +19,9 @@
         /// to only firing events when it determines the incoming value is different from the
         /// existing value.
         /// </summary>
-        public EventChainProperty(T? startValue = default, bool onlyFireOnValueChanges = true)
+        public EventChainProperty(T startValue = default, bool onlyFireOnValueChanges = true)
         {
-            this.value = (startValue is not null) ? startValue : default!;
+            this.value = (startValue != null) ? startValue : default!;
             this.onlyFireOnValueChanges = onlyFireOnValueChanges;
         }
 
@@ -30,12 +33,12 @@
         /// will call your provided code in response.  Given this is an event chain, you may also
         /// be interested in the internal <see cref="EventChain{T}.OnEventCompleted"/> event.
         /// </summary>
-        public readonly EventChain<(T oldValue, T newValue)> ValueChanged = new();
+        public readonly EventChain<(T oldValue, T newValue)> ValueChanged = new EventChain<(T oldValue, T newValue)>();
 
         /// <summary>
         /// Fires then the event chain determines it has completed processing.
         /// </summary>
-        public readonly QueuedEvent ValueChangedEventCompleted = new();
+        public readonly QueuedEvent ValueChangedEventCompleted = new QueuedEvent();
 
         /// <summary>
         /// setter of this property causes <see cref="ValueChanged"/> to fire based on your

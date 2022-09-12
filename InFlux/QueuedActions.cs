@@ -1,4 +1,8 @@
-﻿namespace InFlux
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+namespace InFlux
 {
     /// <summary>
     /// Allows you to add code to the queue for execution.
@@ -6,7 +10,7 @@
     /// </summary>
     public static class QueuedActions
     {
-        private static Queue<WeakReference<Action>> queue = new();
+        private static Queue<WeakReference<Action>> queue = new Queue<WeakReference<Action>>();
 
 #if DEBUG
         /// <summary>
@@ -70,7 +74,7 @@
 
             // given that 'action' can call the Add or AddRange methods, the queue may have grown.
             while (queue.TryDequeue(out var action))
-                if(action?.TryGetTarget(out Action? code) ?? false)
+                if(action?.TryGetTarget(out Action code) ?? false)
                     code?.Invoke();
             
             busy = false;

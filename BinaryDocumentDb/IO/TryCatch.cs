@@ -11,7 +11,6 @@ namespace BinaryDocumentDb.IO
         /// wraps your code in a try/catch, and guarantees a response as such.
         /// Exceptions are added to the response, is an exception is thrown.
         /// </summary>
-
         public static ExecResponse Wrap(Action code, int errorCode = 13)
         {
             var response = new ExecResponse

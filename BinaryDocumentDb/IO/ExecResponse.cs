@@ -10,10 +10,20 @@ namespace BinaryDocumentDb.IO
     /// </summary>
     public class ExecResponse
     {
+        /// <summary>
+        /// The meaning of 'Success' is often contentious, and we suggest its meaning assume no exceptions 
+        /// were thrown, and therefore the golden path, or expected anticipated result is the outcome.
+        /// </summary>
         public bool Success { get; set; }
 
+        /// <summary>
+        /// A api-defined value indicating the kind of error that occurred.
+        /// </summary>
         public int ErrorCode { get; set; }
 
+        /// <summary>
+        /// If Success is FALSE, you should see one or more error messages in this collection.
+        /// </summary>
         public List<string> Messages { get; set; } = new List<string>();
     }
 
@@ -26,6 +36,9 @@ namespace BinaryDocumentDb.IO
     /// <typeparam name="T"></typeparam>
     public class ExecResponse<T> : ExecResponse
     {
+        /// <summary>
+        /// If Success is true, you should have the expected resulting value here.
+        /// </summary>
         public T Result { get; set; } = default(T)!;
     }
 }

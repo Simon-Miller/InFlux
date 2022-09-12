@@ -5,6 +5,10 @@ namespace BinaryDocumentDb.Extensions
 {
     internal static class IEnumerableExtensions
     {
+        /// <summary>
+        /// A Linq to Objects extension that returns the lowest perceived item in a collection based on you
+        /// providing a selector that returns an <see cref="IComparable"/> used to determine the lowest.
+        /// </summary>
         public static T Lowest<T>(this IEnumerable<T>? collection, Func<T, IComparable> comparableValueGetter)
         {
             IComparable? lowest = null;
@@ -28,7 +32,7 @@ namespace BinaryDocumentDb.Extensions
                             lowestItem = item;
                         }
                     }
-                }           
+                }
 
             return lowestItem!;
         }
@@ -42,7 +46,7 @@ namespace BinaryDocumentDb.Extensions
             if (collection is null) return -1;
 
             int index = 0;
-            foreach(var item in collection)
+            foreach (var item in collection)
             {
                 if (predicate(item))
                     return index;

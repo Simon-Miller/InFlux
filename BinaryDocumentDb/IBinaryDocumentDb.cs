@@ -1,4 +1,6 @@
 ﻿using BinaryDocumentDb.IO;
+using InFlux;
+using System;
 using System.Collections.Generic;
 
 namespace BinaryDocumentDb
@@ -6,7 +8,7 @@ namespace BinaryDocumentDb
     /// <summary>
     /// Blob CRUD. Repository style interface.
     /// </summary>
-    public interface IBinaryDocumentDb
+    public interface IBinaryDocumentDb : IDisposable
     {
         ExecResponse<uint> Create(byte[] blobData);
 
@@ -16,5 +18,11 @@ namespace BinaryDocumentDb
 
         ExecResponse Delete(uint key);
 
+
+        QueuedEvent<uint> OnCreated { get; }
+
+        QueuedEvent<uint> OnUpdated { get; }
+
+        QueuedEvent<uint> OnDeleted { get; }
     }
 }
