@@ -38,14 +38,14 @@
             instance.OnUpdated.Subscribe((O, N) => count++);
 
             // Act
-            var exec = instance.Update(1, new byte[] { 4, 5, 6 });
+            var response = instance.Update(1, new byte[] { 4, 5, 6 });
 
             // Assert
             Assert.AreEqual(1, count);
 
-            Assert.IsTrue(exec.Success);
-            Assert.AreEqual(0, exec.ErrorCode);
-            Assert.AreEqual(0, exec.Messages.Count);
+            Assert.IsTrue(response.Success);
+            Assert.AreEqual(0, response.ErrorCode);
+            Assert.AreEqual(0, response.Messages.Count);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 1, 12,0,0,0, 1,0,0,0, 4,5,6 }));
@@ -62,14 +62,14 @@
             instance.OnDeleted.Subscribe((O, N) => count++);
 
             // Act
-            var exec = instance.Delete(1);
+            var response = instance.Delete(1);
 
             // Assert
             Assert.AreEqual(1, count);
 
-            Assert.IsTrue(exec.Success);
-            Assert.AreEqual(0, exec.ErrorCode);
-            Assert.AreEqual(0, exec.Messages.Count);
+            Assert.IsTrue(response.Success);
+            Assert.AreEqual(0, response.ErrorCode);
+            Assert.AreEqual(0, response.Messages.Count);
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 12,0,0,0, 1,0,0,0, 1,2,3 }));

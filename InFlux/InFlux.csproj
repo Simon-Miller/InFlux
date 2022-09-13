@@ -16,9 +16,9 @@ One-off subscriptions, and callbacks for completed events are supported.</Descri
 	  <RepositoryUrl>https://github.com/Simon-Miller/InFlux</RepositoryUrl>
 	  <RepositoryType>git</RepositoryType>
 	  <PackageTags>event;view;model;delegate;callback;entity;reactive;responsive</PackageTags>
-	  <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+	  <PackageReleaseNotes>Converted project to .Net Standard 2.1 for compatibility with .Net Framework</PackageReleaseNotes>
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
-	  <AssemblyVersion>1.1.6</AssemblyVersion>
+	  <AssemblyVersion>1.5</AssemblyVersion>
 	  <Version>$(AssemblyVersion)</Version>
   </PropertyGroup>
 

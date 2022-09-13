@@ -3,6 +3,18 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Version>$(AssemblyVersion)</Version>
+    <PackageProjectUrl>https://github.com/Simon-Miller/InFlux</PackageProjectUrl>
+    <Description>A low level blob database file, with a repository that acts as an index of available blobs.  
+There has been a lot of thought around trying to avoid writing changes to the file on disk
+because solid state drives have a finite lifecycle.  Therefore the underlying code seeks to
+re-use empty space, and only mark areas as free-space by altering a single byte on disk.
+Given this holds a file stream open, there can only be one instance of the repository,
+which you can consider the single source of truth.  This repository raises events as file 
+alterations complete, using the InFlux method of weak referenced events.</Description>
   </PropertyGroup>
 
   <ItemGroup>
