@@ -1,22 +1,14 @@
 ﻿namespace BinaryDocumentDb
 {
     /// <summary>
-    /// Factory with both a static Make, and an instance version for DI purposes.
+    /// Factory method to instantiate a class for you, exposed as an <see cref="IBinaryDocumentDb"/>.
     /// </summary>
     public class BinaryDocumentDbFactory
     {
-        public BinaryDocumentDbFactory(BdDbConfig config)
-        {
-            Config = config;
-        }
-
-        public readonly BdDbConfig Config;
-
-        public IBinaryDocumentDb Make()
-        {
-            return Make(Config);
-        }
-
+        /// <summary>
+        /// Provide configuration, and receive an <see cref="IBinaryDocumentDb"/> instance in return.
+        /// <para>If the file you provide is already in use, an exception will be thrown.</para>
+        /// </summary>
         public static IBinaryDocumentDb Make(BdDbConfig config)
         {
             return new BinaryBlobContext(config);

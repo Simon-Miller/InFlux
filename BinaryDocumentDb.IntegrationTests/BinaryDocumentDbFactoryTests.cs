@@ -4,12 +4,12 @@ namespace BinaryDocumentDb.IntegrationTests
     public class BinaryDocumentDbFactoryTests
     {
         [TestMethod]
-        public void Static_make_works()
+        public void Static_Make_works()
         {
             // Arrange
             const string dbFileName = "staticTest.db";
 
-            var blob = new byte[] { 1, 2, 3};
+            var blob = new byte[] { 1, 2, 3 };
 
             if (File.Exists(dbFileName))
                 File.Delete(dbFileName);
@@ -36,36 +36,17 @@ namespace BinaryDocumentDb.IntegrationTests
         }
 
         [TestMethod]
-        public void Instance_make_works()
+        [ExpectedException(typeof(IOException))]
+        public void Creating_more_than_one_instance_of_same_database_fails()
         {
             // Arrange
-            const string dbFileName = "staticTest2.db";
-
-            var blob = new byte[] { 1, 2, 3 };
-
-            if (File.Exists(dbFileName))
-                File.Delete(dbFileName);
+            const string dbFileName = "staticTest.db";
 
             // Act
-            var factory = new BinaryDocumentDbFactory(new BdDbConfig() { FilePathAndName = dbFileName });
-            var instance = factory.Make(); // GOTCHA!  Was private! LOL
+            var instanceOne = BinaryDocumentDbFactory.Make(new BdDbConfig() { FilePathAndName = dbFileName });
 
-            var createResult = instance.Create(blob);
-
-            // Assert
-            Assert.IsTrue(createResult.Success);
-
-            // Act
-            var key = createResult.Result;
-            var readResult = instance.Read(createResult.Result);
-
-            // Assert
-            Assert.IsTrue(readResult.Success);
-
-            var readBlob = readResult.Result;
-            Assert.IsTrue(readBlob[0] == 1);
-            Assert.IsTrue(readBlob[1] == 2);
-            Assert.IsTrue(readBlob[2] == 3);
+            // should fail
+            var instanceTwo = BinaryDocumentDbFactory.Make(new BdDbConfig() { FilePathAndName = dbFileName });
         }
     }
 }

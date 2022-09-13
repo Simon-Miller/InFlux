@@ -1,4 +1,4 @@
-﻿namespace BinaryDocumentDb.Tests.Try3
+﻿namespace BinaryDocumentDb.Tests
 {
     [TestClass]
     public class BinaryBlobContextTests

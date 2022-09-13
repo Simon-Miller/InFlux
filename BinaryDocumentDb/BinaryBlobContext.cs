@@ -6,6 +6,8 @@ namespace BinaryDocumentDb
 {
     /// <summary>
     /// Externally, instances of this class should happen via either DI, or a Factory class.
+    /// They should expose this through the public <see cref="IBinaryDocumentDb"/> interface.
+    /// Note the lack of inline documentation? You can find inline documentation in the interface 
     /// </summary>
     internal class BinaryBlobContext : IBinaryDocumentDb
     {
@@ -14,7 +16,6 @@ namespace BinaryDocumentDb
         public BinaryBlobContext(BdDbConfig config) 
             : this(new VirtualFileStream(config.FilePathAndName))
         {
-            this.config = config;
         }
 
         /// <summary>
@@ -22,14 +23,11 @@ namespace BinaryDocumentDb
         /// </summary>
         internal BinaryBlobContext(IVirtualFileStream fs)
         {
-            this.config = new BdDbConfig();
             this.fs = fs;
-
             FileOperations = new FileStuff(fs);
 
             (KeyToOffsetDictionary, FreeSpaceEntries) = FileOperations.ScanFile();
         }
-
 
         private bool isDisposed = false;
 
@@ -38,7 +36,7 @@ namespace BinaryDocumentDb
             if (isDisposed == false)
             {
                 isDisposed = true;
-                fs.Close();
+                fs?.Close(); // GOTCHA!  A failed instantiation will try and call Close when there is no instance of fs. 
             }
         }
 
@@ -50,7 +48,6 @@ namespace BinaryDocumentDb
 
         #endregion
 
-        private readonly BdDbConfig config;
         private readonly IVirtualFileStream fs;
         private readonly FileStuff FileOperations;
 

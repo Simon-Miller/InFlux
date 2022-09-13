@@ -1,6 +1,6 @@
 ﻿namespace BinaryDocumentDb
 {
-    public class FreeSpaceEntry
+    internal class FreeSpaceEntry
     {
         /// <summary>
         /// represents an entry on disk. but from the perspective of actual available space to store data,
@@ -14,10 +14,13 @@
             Length = length;
         }
 
+        /// <summary>
+        /// Offset from the beginning of the database file that we can say is the first byte of available space.  (header byte)
+        /// </summary>
         public readonly uint Offset;
 
         /// <summary>
-        /// should be number of bytes we can write as data.  Not including any meta data
+        /// should be number of bytes we can write into the 'space' within the database file.
         /// </summary>
         public readonly uint Length;
     }
