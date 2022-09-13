@@ -15,6 +15,10 @@ re-use empty space, and only mark areas as free-space by altering a single byte 
 Given this holds a file stream open, there can only be one instance of the repository,
 which you can consider the single source of truth.  This repository raises events as file 
 alterations complete, using the InFlux method of weak referenced events.</Description>
+    <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
+    <PackageIcon>BinaryDocumentDbIcon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/Simon-Miller/InFlux</RepositoryUrl>
+    <PackageTags>store db file binary document</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +27,17 @@ alterations complete, using the InFlux method of weak referenced events.</Descri
 
   <ItemGroup>
     <ProjectReference Include="..\InFlux\InFlux.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="BinaryDocumentDbIcon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="ReadMe.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
