@@ -23,7 +23,7 @@
             Assert.AreEqual(0, exec.ErrorCode);
             Assert.AreEqual(0, exec.Messages.Count);
 
-            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] 
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0,5,0,0,0, 1,12,0,0,0, 1,0,0,0, 1,2,3 }));
         }
 
@@ -31,7 +31,7 @@
         public void Fires_OnUpdated_event()
         {
             // Arrange
-            var fs = new FakeVirtualFileStream(new byte[] { 1,  12, 0, 0, 0,  1, 0, 0, 0,  1, 2, 3 });
+            var fs = new FakeVirtualFileStream(new byte[] { 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 });
 
             var instance = new BinaryBlobContext(fs);
             var count = 0;
@@ -73,6 +73,27 @@
 
             Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
                 { 0, 12,0,0,0, 1,0,0,0, 1,2,3 }));
+        }
+
+        [TestMethod]
+        public void Can_check_key_exists()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+                { 0, 5,0,0,0, 1, 12,0,0,0, 123,0,0,0, 1, 2, 3 });
+
+            var instance = new BinaryBlobContext(fs);
+
+            // Act
+            var goodResponse = instance.Exists(123);
+            var badResponse = instance.Exists(0);
+
+            // Assert
+            Assert.IsTrue(goodResponse.Success);
+            Assert.IsTrue(badResponse.Success);
+
+            Assert.IsTrue(goodResponse.Result);
+            Assert.IsFalse(badResponse.Result);
         }
     }
 }

@@ -19,6 +19,7 @@ alterations complete, using the InFlux method of weak referenced events.</Descri
     <PackageIcon>BinaryDocumentDbIcon.png</PackageIcon>
     <RepositoryUrl>https://github.com/Simon-Miller/InFlux</RepositoryUrl>
     <PackageTags>store db file binary document</PackageTags>
+    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

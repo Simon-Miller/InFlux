@@ -85,5 +85,8 @@ namespace BinaryDocumentDb
                  FileOperations.DeleteBlob(KeyToOffsetDictionary, FreeSpaceEntries, key);
                  OnDeleted.FireEvent(0, key);
              });
+
+        public ExecResponse<bool> Exists(uint blobKey) =>
+            TryCatch.Wrap(() => KeyToOffsetDictionary.ContainsKey(blobKey));
     }
 }
