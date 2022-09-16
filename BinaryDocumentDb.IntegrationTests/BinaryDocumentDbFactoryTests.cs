@@ -1,3 +1,6 @@
+using BinaryDocumentDb.IntegrationTests.UnitTestHelpers;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace BinaryDocumentDb.IntegrationTests
 {
     [TestClass]
@@ -14,8 +17,10 @@ namespace BinaryDocumentDb.IntegrationTests
             if (File.Exists(dbFileName))
                 File.Delete(dbFileName);
 
+            var factory = DIContainer.DI.GetService<IBinaryDocumentDbFactory>();
+
             // Act
-            var instance = BinaryDocumentDbFactory.Make(new BdDbConfig() { FilePathAndName = dbFileName });
+            var instance = factory!.Make(new BdDbConfig() { FilePathAndName = dbFileName });
 
             var createResult = instance.Create(blob);
 
@@ -41,12 +46,13 @@ namespace BinaryDocumentDb.IntegrationTests
         {
             // Arrange
             const string dbFileName = "staticTest.db";
+            var factory = DIContainer.DI.GetService<IBinaryDocumentDbFactory>();
 
             // Act
-            var instanceOne = BinaryDocumentDbFactory.Make(new BdDbConfig() { FilePathAndName = dbFileName });
+            var instanceOne = factory!.Make(new BdDbConfig() { FilePathAndName = dbFileName });
 
             // should fail
-            var instanceTwo = BinaryDocumentDbFactory.Make(new BdDbConfig() { FilePathAndName = dbFileName });
+            var instanceTwo = factory.Make(new BdDbConfig() { FilePathAndName = dbFileName });
         }
     }
 }
