@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace BinaryDocumentDb
 {
@@ -12,7 +13,7 @@ namespace BinaryDocumentDb
         /// </summary>
         public static IServiceCollection RegisterBinaryDocumentDbFactory(this IServiceCollection services)
         {
-            services.AddSingleton<IBinaryDocumentDbFactory, BinaryDocumentDbFactory>();
+            services.TryAddSingleton<IBinaryDocumentDbFactory, BinaryDocumentDbFactory>();
 
             return services;
         }
