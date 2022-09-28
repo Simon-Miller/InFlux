@@ -73,6 +73,13 @@ namespace BinaryDocumentDb.IntegrationTests.UnitTestHelpers
             };
         }
 
+        public ExecResponse<IEnumerable<uint>> CacheKeys() =>
+            new ExecResponse<IEnumerable<uint>> 
+            { 
+                Success = true, 
+                Result = fakeKeyToOffset.Keys.Select(x=>x) 
+            };
+
         public QueuedEvent<uint> OnCreated { get; private set; } = new QueuedEvent<uint>();
         public QueuedEvent<uint> OnUpdated { get; private set; } = new QueuedEvent<uint>();
         public QueuedEvent<uint> OnDeleted { get; private set; } = new QueuedEvent<uint>();
