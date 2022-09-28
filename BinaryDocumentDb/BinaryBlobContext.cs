@@ -1,6 +1,7 @@
 ﻿using BinaryDocumentDb.IO;
 using InFlux;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BinaryDocumentDb
 {
@@ -72,6 +73,10 @@ namespace BinaryDocumentDb
             TryCatch.Wrap(() =>
                 FileOperations.ReadBlob(KeyToOffsetDictionary, blobKey).Data);
 
+        // TODO: UNIT TEST
+        public ExecResponse<IEnumerable<uint>> CacheKeys() =>
+            TryCatch.Wrap(() => KeyToOffsetDictionary.Keys.Select(x => x));
+
         public ExecResponse Update(uint key, byte[] blobData) =>
             TryCatch.Wrap(() =>
             {
@@ -88,5 +93,6 @@ namespace BinaryDocumentDb
 
         public ExecResponse<bool> Exists(uint blobKey) =>
             TryCatch.Wrap(() => KeyToOffsetDictionary.ContainsKey(blobKey));
+
     }
 }

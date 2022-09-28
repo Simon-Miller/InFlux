@@ -19,6 +19,11 @@ namespace BinaryDocumentDb
         ExecResponse<uint> Create(byte[] blobData);
 
         /// <summary>
+        /// Retrieves a collection of all valid keys for all the blobs stored.
+        /// </summary>
+        ExecResponse<IEnumerable<uint>> CacheKeys();
+
+        /// <summary>
         /// Retrieves the Blob you previously stored, by using the <paramref name="blobKey"/> (KEY) you were given.
         /// Returns an <see cref="ExecResponse{T}"/> detailing the result of this operation. 
         /// </summary>

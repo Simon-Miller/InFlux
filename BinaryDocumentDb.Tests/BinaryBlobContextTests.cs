@@ -1,4 +1,5 @@
-﻿namespace BinaryDocumentDb.Tests
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+namespace BinaryDocumentDb.Tests
 {
     [TestClass]
     public class BinaryBlobContextTests
@@ -94,6 +95,24 @@
 
             Assert.IsTrue(goodResponse.Result);
             Assert.IsFalse(badResponse.Result);
+        }
+
+        [TestMethod]
+        public void Can_get_all_cache_keys()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+                { 0, 5,0,0,0,   1, 12,0,0,0, 123,0,0,0, 1, 2, 3,   1, 10,0,0,0, 125,0,0,0, 123,   0, 5,0,0,0});
+
+            var instance = new BinaryBlobContext(fs);
+
+            // Act -- as it's a unit test, we can skip checking the exec response, because any failure is a unit test failure.
+            var keys = instance.CacheKeys().Result.ToList();
+
+            // Assert
+            Assert.AreEqual(2, keys.Count);
+            Assert.AreEqual(123u, keys[0]);
+            Assert.AreEqual(125u, keys[1]);
         }
     }
 }
