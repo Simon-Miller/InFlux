@@ -56,6 +56,69 @@ namespace BinaryDocumentDb
         }
 
         /// <summary>
+        /// Make the next available key available, so the user can create a blob and know its access key before its saved,
+        /// as the access key is stored as part of the blob on disk, this is a useful step.
+        /// </summary>
+        internal uint ReserveNextKey() =>
+            this.getNextKey();
+        
+        internal void InsertBlobWithKey(
+            Dictionary<uint, uint> keyToPhysicalOffsetInFile,
+            List<FreeSpaceEntry> freeSpacesInFile,
+            uint key,
+            byte[] blob)
+        {
+            var rawLength = (uint)blob.Length + MINIMUM_BLOB_ENTRY_SIZE;
+            var entryPlusEmptyLength = rawLength + FULL_EMPTY_ENTRY_BYTES_SIZE;
+
+            var availableSpace = findAvailableSpaceInFile(freeSpacesInFile, rawLength);
+
+            if (availableSpace?.Length == rawLength)
+                saveBlobAtEmptySpaceWithNoNewEmptySpaceEntryNecessary();
+
+            else if (availableSpace?.Length >= entryPlusEmptyLength)
+                saveBlobAtEmptySpaceWithNewEmptySpaceEntryAtEnd();
+
+            else
+                saveBlobAtEndOfStream();
+
+            #region local methods
+
+            void saveBlobAtEmptySpaceWithNewEmptySpaceEntryAtEnd()
+            {
+                // write blob at available space (and add to index).
+                fs.Seek(availableSpace!.Offset, SeekOrigin.Begin);
+                writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, key, blob);
+
+                // write new empty entry in remaining space.
+                var rawLengthToLose = blob.Length + HEADER_BYTES_SIZE + LENGTH_VALUE_BYTES_SIZE + KEY_VALUE_BYTES_SIZE;
+                var newAvailableSpaceLength = availableSpace.Length - rawLengthToLose;
+
+                writeFreeSpaceEntryToDiskAtCurrentPositionAndListEntry(freeSpacesInFile, (uint)newAvailableSpaceLength);
+                freeSpacesInFile.Remove(availableSpace); // old entry no longer relevant as we created a new one
+            }
+
+            void saveBlobAtEmptySpaceWithNoNewEmptySpaceEntryNecessary()
+            {
+                // need to overwrite empty space entry with blob entry.
+                fs.Seek(availableSpace.Offset, SeekOrigin.Begin);
+                writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, key, blob);
+
+                // need to remove the empty entry from list of empty entries. (exactly overwritten on disk)
+                freeSpacesInFile.Remove(availableSpace);
+            }
+
+            void saveBlobAtEndOfStream()
+            {
+                // seek the end of the file, which is where we can write this blob.
+                fs.Seek(0, SeekOrigin.End);
+                writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, key, blob);
+            }
+
+            #endregion
+        }
+
+        /// <summary>
         /// Insert a blob into the database file, and return a unique key bywhich we can read the blob.
         /// </summary>
         internal uint InsertBlob(
@@ -279,7 +342,6 @@ namespace BinaryDocumentDb
 
             #endregion
         }
-
 
         #region scan file stream
 
@@ -638,13 +700,29 @@ namespace BinaryDocumentDb
             fs.Write(new byte[] { sharedMem.Byte0, sharedMem.Byte1, sharedMem.Byte2, sharedMem.Byte3, }, 0, 4);
         }
 
+        private object nextKeyLock = new object();
         private uint getNextKey()
         {
-            return nextKey++;
+            lock (nextKeyLock)
+            {
+                return nextKey++;
+            }
         }
 
         private uint writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(
             Dictionary<uint, uint> keyToPhysicalOffsetInFile,
+            byte[] blob)
+        {
+            var key = getNextKey();
+            writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, key, blob);
+
+            // for use to keep hold of.
+            return key;
+        }
+
+        private void writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(
+            Dictionary<uint, uint> keyToPhysicalOffsetInFile,
+            uint key,
             byte[] blob)
         {
             // remember this Position for the 'index' dictionary.
@@ -655,23 +733,18 @@ namespace BinaryDocumentDb
             writeByte(BLOB_ENTRY);
 
             // save to disk
-            var key = insertBlobDataToDiskAtCurrentPosition(blob);
+            insertBlobDataToDiskAtCurrentPositionWithExistingKey(key,blob);
 
             // add to dictionary
             keyToPhysicalOffsetInFile.Add(key, offset);
-
-            // for use to keep hold of.
-            return key;
         }
 
         /// <summary>
         /// does not include the header.  Length, Key, and Data only and in that order.
         /// Returns the Key generated when saving.
         /// </summary>
-        private uint insertBlobDataToDiskAtCurrentPosition(byte[] blob)
+        private void insertBlobDataToDiskAtCurrentPositionWithExistingKey(uint key, byte[] blob)
         {
-            var key = getNextKey();
-
             // length:
             writeUInt((uint)blob.Length + HEADER_BYTES_SIZE + LENGTH_VALUE_BYTES_SIZE + KEY_VALUE_BYTES_SIZE);
 
@@ -680,9 +753,6 @@ namespace BinaryDocumentDb
 
             // blob data:
             fs.Write(blob, 0, blob.Length);
-
-            // key for dictionary entry in KeyToPhysicalOffsetInFile
-            return key;
         }
 
         private void writeBlobEntryAtCurrentPosition(uint key, byte[] blobData)

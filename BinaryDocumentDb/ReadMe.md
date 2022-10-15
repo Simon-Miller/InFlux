@@ -83,3 +83,21 @@ var instance = BinaryDocumentDbFactory.Make(new BdDbConfig()
  ```
     var response = instance.Delete(123);
  ```
+
+- Reserve a key in the database before creating an entry 
+```
+    var instance = new BinaryBlobContext(fs);
+    var response = instance.ReserveNextKey();
+    if(response.Success)
+    {
+       var key = response.Result;
+    }
+```
+
+- Create a new record with a reserved Key
+```
+    var reservedKey = instance.ReserveNextKey().Result;
+
+    var blob = new byte[] { 1, 2, 3 };
+    var response = instance.Create(reservedKey, blob);
+```

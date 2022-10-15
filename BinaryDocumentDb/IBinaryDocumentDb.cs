@@ -11,6 +11,19 @@ namespace BinaryDocumentDb
     public interface IBinaryDocumentDb : IDisposable
     {
         /// <summary>
+        /// Make the next available key available, so the user can create a blob and know its access key before its saved,
+        /// as the access key is stored as part of the blob on disk, this is a useful step.
+        /// </summary>
+        ExecResponse<uint> ReserveNextKey();
+
+        /// <summary>
+        /// Attempts to create (not update) an entry in the database with the existing key you provided
+        /// This will add the KEY to the internal index, and the data will be stored against that KEY.
+        /// If the KEY is not unique, the <see cref="ExecResponse"/> returned will be marked unsuccessful.
+        /// </summary>
+        ExecResponse Create(uint reservedKey, byte[] blobData);
+
+        /// <summary>
         /// Create / Insert a record of the <paramref name="blobData"/> in your store.
         /// Fires the <see cref="OnCreated"/> event after the operation completes.
         /// Returns an <see cref="ExecResponse{T}"/> detailing the result of this operation.

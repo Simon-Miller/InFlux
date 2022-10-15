@@ -114,5 +114,84 @@ namespace BinaryDocumentDb.Tests
             Assert.AreEqual(123u, keys[0]);
             Assert.AreEqual(125u, keys[1]);
         }
+
+        [TestMethod]
+        public void Can_get_next_available_key_and_save()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[] { 0, 5, 0, 0, 0 });
+            var instance = new BinaryBlobContext(fs);
+            var onCreatedCalledCount = 0;
+            instance.OnCreated.Subscribe((O, N) => onCreatedCalledCount++);
+
+            // Act
+            var reservedKey = instance.ReserveNextKey().Result;
+            
+
+            var blob = new byte[] { 1, 2, 3 };
+            var response = instance.Create(reservedKey, blob);
+
+            var readResponse = instance.Read(reservedKey);
+
+            // TODO: Create data scenarios of empty spaces in file to account for exact match for space required,
+            // as well as bigger than needed.
+
+            // DONE: This test will store the entry at the END of the file.
+
+            Assert.IsTrue(response.Success);
+            Assert.IsTrue(readResponse.Success);
+            Assert.AreEqual(1, onCreatedCalledCount);
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 0, 5, 0, 0, 0, 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
+        }
+
+        [TestMethod]
+        public void Can_get_next_available_key_and_save_in_exact_free_space()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[] { 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            var instance = new BinaryBlobContext(fs);
+            var onCreatedCalledCount = 0;
+            instance.OnCreated.Subscribe((O, N) => onCreatedCalledCount++);
+
+            // Act
+            var reservedKey = instance.ReserveNextKey().Result;
+
+            var blob = new byte[] { 1, 2, 3 };
+            var response = instance.Create(reservedKey, blob);
+
+            var readResponse = instance.Read(reservedKey);
+
+            // DONE: This test will store the entry in an existing free space of exact match size.
+
+            Assert.IsTrue(response.Success);
+            Assert.IsTrue(readResponse.Success);
+            Assert.AreEqual(1, onCreatedCalledCount);
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3 }));
+        }
+
+        [TestMethod]
+        public void Can_get_next_available_key_and_save_in_larger_free_space()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[] { 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            var instance = new BinaryBlobContext(fs);
+            var onCreatedCalledCount = 0;
+            instance.OnCreated.Subscribe((O, N) => onCreatedCalledCount++);
+
+            // Act
+            var reservedKey = instance.ReserveNextKey().Result;
+
+            var blob = new byte[] { 1, 2, 3 };
+            var response = instance.Create(reservedKey, blob);
+
+            var readResponse = instance.Read(reservedKey);
+
+            // DONE: This test will store the entry in an existing free space plus free space entry of 5.
+
+            Assert.IsTrue(response.Success);
+            Assert.IsTrue(readResponse.Success);
+            Assert.AreEqual(1, onCreatedCalledCount);            
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[] { 1, 12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3,   0, 5, 0, 0, 0 }));
+        }
     }
 }

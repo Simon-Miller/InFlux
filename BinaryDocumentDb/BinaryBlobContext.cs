@@ -1,5 +1,6 @@
 ﻿using BinaryDocumentDb.IO;
 using InFlux;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -61,6 +62,9 @@ namespace BinaryDocumentDb
 
         public QueuedEvent<uint> OnDeleted { get; private set; } = new QueuedEvent<uint>();
 
+        public ExecResponse<uint> ReserveNextKey() =>
+            TryCatch.Wrap(FileOperations.ReserveNextKey);
+
         public ExecResponse<uint> Create(byte[] blobData) =>
             TryCatch.Wrap(() =>
             {
@@ -68,6 +72,17 @@ namespace BinaryDocumentDb
                 OnCreated.FireEvent(0, result);
                 return result;
             });
+
+        public ExecResponse Create(uint reservedKey, byte[] blobData) =>
+            TryCatch.Wrap(() => 
+            {
+                if (KeyToOffsetDictionary.TryGetValue(reservedKey, out var _))
+                    throw new Exception("KEY provided already exists, so can't store a new entry agaisnt that key.");
+
+                FileOperations.InsertBlobWithKey(KeyToOffsetDictionary, FreeSpaceEntries, reservedKey, blobData);
+                OnCreated.FireEvent(0, reservedKey);
+            });
+        
 
         public ExecResponse<IReadOnlyList<byte>> Read(uint blobKey) =>
             TryCatch.Wrap(() =>
@@ -92,7 +107,6 @@ namespace BinaryDocumentDb
              });
 
         public ExecResponse<bool> Exists(uint blobKey) =>
-            TryCatch.Wrap(() => KeyToOffsetDictionary.ContainsKey(blobKey));
-
+            TryCatch.Wrap(() => KeyToOffsetDictionary.ContainsKey(blobKey));     
     }
 }
