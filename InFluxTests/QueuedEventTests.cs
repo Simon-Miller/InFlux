@@ -186,6 +186,35 @@ namespace InFluxTests
         #region generic version of queued event tests
 
         [TestMethod]
+        public void can_unsunscribe_by_generic_action()
+        {
+            // Arrange -- create two subscribers, and remove one.  Other should still get called.
+            var var1 = 0;
+            var var2 = 0;
+
+            void action1(bool o, bool n) { var1++; }
+            void action2(bool o, bool n) { var2++; }
+
+            var testEvent = new QueuedEvent<bool>();
+
+            testEvent.Subscribe(action1);
+            testEvent.Subscribe(action2);
+
+            // Act
+            testEvent.FireEvent(false, true);
+
+            // Arrange 2
+            testEvent.UnSubscribe(action1);
+
+            // Act 2
+            testEvent.FireEvent(false, true);
+
+            // Assert
+            Assert.AreEqual(1, var1);
+            Assert.AreEqual(2, var2);
+        }
+
+        [TestMethod]
         public void Ordering_of_generic_events_is_more_predictable()
         {
             // Arrange -- NOTE how similar this is to setup in EventsSuckTests

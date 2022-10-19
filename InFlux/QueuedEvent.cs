@@ -174,10 +174,16 @@ namespace InFlux
 
             subscribers.GetAllLiveEntries().Each(entry =>
             {
-                subscribers.Remove(entry.Key); 
-                removed = true; 
+                if(entry.Value.TryGetTarget(out var target))
+                {
+                    if(target == code)
+                    {
+                        subscribers.Remove(entry.Key);
+                        removed = true;
+                    }
+                }
             });
-
+            
             return removed;
         }
 
