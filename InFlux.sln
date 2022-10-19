@@ -11,7 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryDocumentDb", "BinaryD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryDocumentDb.Tests", "BinaryDocumentDb.Tests\BinaryDocumentDb.Tests.csproj", "{52EA9FAE-A0D7-4138-AC3B-5E7A3D5C9B9C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryDocumentDb.IntegrationTests", "BinaryDocumentDb.IntegrationTests\BinaryDocumentDb.IntegrationTests.csproj", "{CDF36493-BB25-46A9-8A0D-62238556CB42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryDocumentDb.IntegrationTests", "BinaryDocumentDb.IntegrationTests\BinaryDocumentDb.IntegrationTests.csproj", "{CDF36493-BB25-46A9-8A0D-62238556CB42}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{A9D81A38-779C-445C-A2D5-4F51535E247C}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
