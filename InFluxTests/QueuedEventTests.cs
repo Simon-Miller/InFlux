@@ -287,35 +287,15 @@ namespace InFluxTests
         {
             var inst = new testClass();
             var count = 0;
-            inst.Id.ValueChanged.Subscribe((O, N) => count++);
         }
 
         [AutoWireup]
         public partial class testClass
-        {
-            // Generate constructor
-            public testClass() 
-            {
-                Id = new(() => id, value => id = value);
-
-                // Generate wire-ups for basic OnEntityChanged event. 
-                Id.ValueChangedNotification.Subscribe(() => OnEntityChanged.FireEvent());
-            }
-            public readonly QueuedEvent OnEntityChanged = new();
-
-           
-            int id; // ** all generated code seeded from THIS field. **
-
-            // Generate idIndirection
-            public readonly QueuedEventPropertyIndirect<int> Id;
+        {        
+            int id; // ** all generated code seeded from THIS field, once project builds. **
         }
 
-        [MetadataType(typeof(testClassMetaData))]
-        public partial class testClass{}
 
-        public partial class testClassMetaData
-        {
-            // Define your own properties with attributes here!
-        }
+
     }
 }
