@@ -1,4 +1,5 @@
 ﻿using InFlux.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace ConsoleApp;
 
@@ -13,8 +14,11 @@ partial class Program
 }
 
 [AutoWireup]
-class testa
+internal class testa
 {
+    [Range(1, 16)]
+    [RegularExpression("^Berty$")]
+    [Required]
     private int id;
 
     [AutoWireupIgnore]

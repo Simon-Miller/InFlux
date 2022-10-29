@@ -60,7 +60,7 @@
             }
         }
 
-        // used internally for auto-wire-up.
+        // used internally for auto-wire-up (EventsEntityBase).
         internal override void OnValueChanged(ValueChangedResponse code) =>
             this.ValueChanged.Subscribe((O, N) => code(O, N));
 
