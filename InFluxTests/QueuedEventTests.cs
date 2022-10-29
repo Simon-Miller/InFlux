@@ -1,4 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using InFlux.Attributes;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.ComponentModel.DataAnnotations;
+
 namespace InFluxTests
 {
     [TestClass]
@@ -269,5 +272,26 @@ namespace InFluxTests
         }
 
         #endregion
+
+
+
+
+
+
+
+
+
+
+        [TestMethod]
+        public void MyTestMethod()
+        {
+            var inst = new testClass();
+        }
+
+        [AutoWireup]
+        partial class testClass
+        {
+            int id; 
+        }
     }
 }

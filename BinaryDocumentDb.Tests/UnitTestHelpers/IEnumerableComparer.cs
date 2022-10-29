@@ -1,6 +1,6 @@
 ﻿namespace BinaryDocumentDb.Tests.UnitTestHelpers
 {
-    internal class IEnumerableComparer
+    public class IEnumerableComparer
     {
         /// <summary>
         /// Compare two IEnumerables of the same type.

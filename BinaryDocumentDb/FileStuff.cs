@@ -733,7 +733,7 @@ namespace BinaryDocumentDb
             writeByte(BLOB_ENTRY);
 
             // save to disk
-            insertBlobDataToDiskAtCurrentPositionWithExistingKey(key,blob);
+            insertBlobDataToDiskAtCurrentPositionWithExistingKey(key, blob);
 
             // add to dictionary
             keyToPhysicalOffsetInFile.Add(key, offset);
