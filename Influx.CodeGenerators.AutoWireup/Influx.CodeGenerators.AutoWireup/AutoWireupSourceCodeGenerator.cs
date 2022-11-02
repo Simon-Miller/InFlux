@@ -113,14 +113,14 @@ namespace Influx.CodeGenerators.AutoWireup
                         var propertyIndirectName = $"{propertyName}Insight";
 
                         sb.Append($"\t\t\t{propertyIndirectName} = new(() => {fieldName}, value => {fieldName} = value);\r\n");
-                        sb.Append($"\t\t\t{propertyIndirectName}.ValueChangedNotification.Subscribe(() => OnEntityChanged.FireEvent());\r\n");
+                        sb.Append($"\t\t\t{propertyIndirectName}.ValueChangedNotification.Subscribe(() => OnEntityChanged.FireEvent());\r\n\r\n");
                     }
 
                     // render end of constructor
-                    sb.Append("\t\t}\r\n");
+                    sb.Append("\t\t}\r\n\r\n");
 
                     // render the OnEntityChanged event.
-                    sb.Append("\t\tpublic readonly QueuedEvent OnEntityChanged = new();\r\n");
+                    sb.Append("\t\tpublic readonly QueuedEvent OnEntityChanged = new();\r\n\r\n");
 
                     foreach (var field in fields)
                     {
@@ -143,8 +143,9 @@ namespace Influx.CodeGenerators.AutoWireup
                                 }
                             }
                         }
+
                         // render property
-                        sb.Append($"\t\tpublic int {propertyName} {{get => {propertyIndirectName}.Value; set => {propertyIndirectName}.Value = value; }}\r\n");
+                        sb.Append($"\t\tpublic {typeText} {propertyName} {{get => {propertyIndirectName}.Value; set => {propertyIndirectName}.Value = value; }}\r\n");
 
                         // render property indirection accessor
                         sb.Append($"\t\tpublic readonly QueuedEventPropertyIndirect<{typeText}> {propertyIndirectName};\r\n\r\n");

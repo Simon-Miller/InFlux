@@ -20,7 +20,7 @@
 
     <Title>Influx.CodeGenerators.AutoWireup</Title>
 
-    <AssemblyVersion>1.0.9</AssemblyVersion>
+    <AssemblyVersion>1.0.11</AssemblyVersion>
 
     <Version>$(AssemblyVersion)</Version>
   </PropertyGroup>
