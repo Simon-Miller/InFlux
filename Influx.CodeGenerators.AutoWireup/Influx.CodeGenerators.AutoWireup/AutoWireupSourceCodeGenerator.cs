@@ -54,7 +54,6 @@ namespace Influx.CodeGenerators.AutoWireup
                         }
                     }
                     
-
                     // render usings
                     sb.Append("using InFlux;\r\n");
 
@@ -111,7 +110,7 @@ namespace Influx.CodeGenerators.AutoWireup
                         var propertyName = capitaliseFirstLetter(fieldName);
                         if (propertyName == fieldName)
                             propertyName += "_";
-                        var propertyIndirectName = $"{propertyName}Indirect";
+                        var propertyIndirectName = $"{propertyName}Insight";
 
                         sb.Append($"\t\t\t{propertyIndirectName} = new(() => {fieldName}, value => {fieldName} = value);\r\n");
                         sb.Append($"\t\t\t{propertyIndirectName}.ValueChangedNotification.Subscribe(() => OnEntityChanged.FireEvent());\r\n");
@@ -131,21 +130,24 @@ namespace Influx.CodeGenerators.AutoWireup
                         var propertyName = capitaliseFirstLetter(fieldName);
                         if (propertyName == fieldName)
                             propertyName += "_";
-                        var propertyIndirectName = $"{propertyName}Indirect";
+                        var propertyIndirectName = $"{propertyName}Insight";
 
                         // render property attributes
                         if (fieldsAttributes.TryGetValue(fieldName, out var attributes))
                         {
-                            sb.Append("\t\t");
-                            foreach (var attribute in attributes)
-                                sb.Append($"{attribute} ");
-                            sb.Append("\r\n");
+                            if (attributes.Count > 0)
+                            {
+                                foreach (var attribute in attributes)
+                                {
+                                    sb.Append($"\t\t{attribute}\r\n");
+                                }
+                            }
                         }
                         // render property
                         sb.Append($"\t\tpublic int {propertyName} {{get => {propertyIndirectName}.Value; set => {propertyIndirectName}.Value = value; }}\r\n");
 
                         // render property indirection accessor
-                        sb.Append($"\t\tpublic readonly QueuedEventPropertyIndirect<{typeText}> {propertyIndirectName};");
+                        sb.Append($"\t\tpublic readonly QueuedEventPropertyIndirect<{typeText}> {propertyIndirectName};\r\n\r\n");
                     }
 
                     // render end of class

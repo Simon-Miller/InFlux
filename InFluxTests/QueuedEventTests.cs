@@ -274,32 +274,31 @@ namespace InFluxTests
         #endregion
 
 
-
-
-
-
-
-
-
-
         [TestMethod]
         public void MyTestMethod()
         {
             var inst = new testClass();
             var count = 0;
 
-            inst.IdIndirect.
+            inst.AgeInsight.ValueChanged.Subscribe((O, N) => { count++; });
+            inst.Age++; // should trigger event.
+
+            //inst.
+
+            Assert.AreEqual(1, count);
         }
-
-        
-
-
 
     }
 
     [AutoWireup]
     public partial class testClass
     {
-        int id; // ** all generated code seeded from THIS field, once project builds. **
+        [Required]
+        [Range(minimum:16, maximum:21, ErrorMessage ="Range must be between 16 and 21")]
+        int age; // ** all generated code seeded from THIS field, once project builds. **
+
+        [Required]
+        [RegularExpression("^[A-Za-z-'`]{2,25}$", ErrorMessage ="Name is invalid.  Use letters only. hyphen and apostrophe accepted.")]
+        string name;
     }
 }

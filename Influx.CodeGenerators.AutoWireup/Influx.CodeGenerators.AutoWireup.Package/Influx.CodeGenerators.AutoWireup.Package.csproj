@@ -10,15 +10,9 @@
   <PropertyGroup>
     <PackageId>Influx.CodeGenerators.AutoWireup</PackageId>
     <Authors>ITSSMILL</Authors>
-    <PackageLicenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</PackageLicenseUrl>
-    <PackageProjectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</PackageProjectUrl>
-    <PackageIconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</PackageIconUrl>
-    <RepositoryUrl>http://REPOSITORY_URL_HERE_OR_DELETE_THIS_LINE</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Influx.CodeGenerators.AutoWireup</Description>
-    <PackageReleaseNotes>Summary of changes made in this release of the package.</PackageReleaseNotes>
-    <Copyright>Copyright</Copyright>
-    <PackageTags>Influx.CodeGenerators.AutoWireup, analyzers</PackageTags>
+    <PackageTags>Influx Code Generator AutoWireup</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
 
@@ -26,13 +20,12 @@
 
     <Title>Influx.CodeGenerators.AutoWireup</Title>
 
-    <AssemblyVersion>1.0.5</AssemblyVersion>
+    <AssemblyVersion>1.0.9</AssemblyVersion>
 
     <Version>$(AssemblyVersion)</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Influx.CodeGenerators.AutoWireup.CodeFixes\Influx.CodeGenerators.AutoWireup.CodeFixes.csproj" />
     <ProjectReference Include="..\Influx.CodeGenerators.AutoWireup\Influx.CodeGenerators.AutoWireup.csproj" />
   </ItemGroup>
 
@@ -43,7 +36,6 @@
   <Target Name="_AddAnalyzersToOutput">
     <ItemGroup>
       <TfmSpecificPackageFile Include="$(OutputPath)\Influx.CodeGenerators.AutoWireup.dll" PackagePath="analyzers/dotnet/cs" />
-      <TfmSpecificPackageFile Include="$(OutputPath)\Influx.CodeGenerators.AutoWireup.CodeFixes.dll" PackagePath="analyzers/dotnet/cs" />
     </ItemGroup>
   </Target>
 
