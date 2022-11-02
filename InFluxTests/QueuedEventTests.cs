@@ -287,15 +287,19 @@ namespace InFluxTests
         {
             var inst = new testClass();
             var count = 0;
+
+            inst.IdIndirect.
         }
 
-        [AutoWireup]
-        public partial class testClass
-        {        
-            int id; // ** all generated code seeded from THIS field, once project builds. **
-        }
+        
 
 
 
+    }
+
+    [AutoWireup]
+    public partial class testClass
+    {
+        int id; // ** all generated code seeded from THIS field, once project builds. **
     }
 }

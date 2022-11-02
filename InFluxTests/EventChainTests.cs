@@ -69,7 +69,7 @@
         }
     }
 
-    class testClass
+    partial class testClass
     {
         public EventChain<int> Event = new();
     }

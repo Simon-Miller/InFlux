@@ -1,16 +1,17 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
-namespace Influx.AutoWireupCodeGenerator
+namespace Influx.CodeGenerators.AutoWireup
 {
     [Generator]
-    public class AutoWireupCode : ISourceGenerator
+    public class AutoWireupSourceCodeGenerator : ISourceGenerator
     {
         public void Execute(GeneratorExecutionContext context)
         {
@@ -30,11 +31,29 @@ namespace Influx.AutoWireupCodeGenerator
                     var classModifiers = ""; wireUp.Modifiers.ToList().ForEach(m => classModifiers += $" {m.Text} ");
 
                     var namespaceName = "ARGH!";
-                    var ns1 = wireUp.Parent as NamespaceDeclarationSyntax;
-                    var ns2 = wireUp.Parent as FileScopedNamespaceDeclarationSyntax;
-                    if (ns1 != null) namespaceName = ns1.Name.ToString().Trim();
-                    if (ns2 != null) namespaceName = ns2.Name.ToString().Trim();
 
+                    SyntaxNode parent = wireUp;
+                    var done = false;
+
+                    while (parent.Parent != null || !done)
+                    {
+                        parent = parent.Parent;
+                        
+                        var ns3 = parent as NamespaceDeclarationSyntax;
+                        if (ns3 != null)
+                        {
+                            namespaceName = ns3.Name.ToString().Trim();
+                            done = true;
+                        }
+
+                        var ns4 = parent as FileScopedNamespaceDeclarationSyntax;
+                        if (ns4 != null)
+                        {
+                            namespaceName = ns4.Name.ToString().Trim();
+                            done = true;
+                        }
+                    }
+                    
 
                     // render usings
                     sb.Append("using InFlux;\r\n");
@@ -158,12 +177,12 @@ namespace Influx.AutoWireupCodeGenerator
 
         public void Initialize(GeneratorInitializationContext context)
         {
-            //#if DEBUG
-            //            if (!Debugger.IsAttached)
-            //            {
-            //                Debugger.Launch();
-            //            }
-            //#endif 
+#if DEBUG
+            if (!Debugger.IsAttached)
+            {
+                Debugger.Launch();
+            }
+#endif
 
             context.RegisterForSyntaxNotifications(() => new MySyntaxReceiver());
         }
