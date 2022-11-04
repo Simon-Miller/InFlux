@@ -15,14 +15,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryDocumentDb.Integratio
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{A9D81A38-779C-445C-A2D5-4F51535E247C}"
 	ProjectSection(SolutionItems) = preProject
+		BinaryDocumentDb_README.md = BinaryDocumentDb_README.md
 		README.md = README.md
+		BinaryDocumentDb\ReadMe.md = BinaryDocumentDb\ReadMe.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Influx.TestConsoleApp", "Influx.TestConsoleApp\Influx.TestConsoleApp.csproj", "{06248558-213D-4F21-8731-A635A9F6092A}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Influx.CodeGenerators.AutoWireup", "Influx.CodeGenerators.AutoWireup\Influx.CodeGenerators.AutoWireup\Influx.CodeGenerators.AutoWireup.csproj", "{4469A1DC-DAA2-427B-8DD1-A5BAE4141201}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Influx.CodeGenerators.AutoWireup.Package", "Influx.CodeGenerators.AutoWireup\Influx.CodeGenerators.AutoWireup.Package\Influx.CodeGenerators.AutoWireup.Package.csproj", "{EA9E10DD-A309-45A3-B052-12FE28E42EEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Influx.AutoWireupCodeGenerator", "Influx.AutoWireupCodeGenerator\Influx.AutoWireupCodeGenerator.csproj", "{2EFDDC1C-0A94-47DC-AEF7-67B7B115B771}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,18 +48,10 @@ Global
 		{CDF36493-BB25-46A9-8A0D-62238556CB42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CDF36493-BB25-46A9-8A0D-62238556CB42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CDF36493-BB25-46A9-8A0D-62238556CB42}.Release|Any CPU.Build.0 = Release|Any CPU
-		{06248558-213D-4F21-8731-A635A9F6092A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{06248558-213D-4F21-8731-A635A9F6092A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{06248558-213D-4F21-8731-A635A9F6092A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{06248558-213D-4F21-8731-A635A9F6092A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4469A1DC-DAA2-427B-8DD1-A5BAE4141201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4469A1DC-DAA2-427B-8DD1-A5BAE4141201}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4469A1DC-DAA2-427B-8DD1-A5BAE4141201}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4469A1DC-DAA2-427B-8DD1-A5BAE4141201}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EA9E10DD-A309-45A3-B052-12FE28E42EEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EA9E10DD-A309-45A3-B052-12FE28E42EEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EA9E10DD-A309-45A3-B052-12FE28E42EEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EA9E10DD-A309-45A3-B052-12FE28E42EEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EFDDC1C-0A94-47DC-AEF7-67B7B115B771}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EFDDC1C-0A94-47DC-AEF7-67B7B115B771}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EFDDC1C-0A94-47DC-AEF7-67B7B115B771}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EFDDC1C-0A94-47DC-AEF7-67B7B115B771}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
