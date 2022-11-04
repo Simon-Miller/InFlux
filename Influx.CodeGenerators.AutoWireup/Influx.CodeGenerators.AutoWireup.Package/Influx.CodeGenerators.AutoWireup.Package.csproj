@@ -11,7 +11,10 @@
     <PackageId>Influx.CodeGenerators.AutoWireup</PackageId>
     <Authors>ITSSMILL</Authors>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Description>Influx.CodeGenerators.AutoWireup</Description>
+    <Description>Adds a source code generator (analyzer) to Visual Studio
+to generate properties and wire up events for you, so you 
+have an entity that raises a generic event when any property
+is set, as well as property specific events.</Description>
     <PackageTags>Influx Code Generator AutoWireup</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
@@ -23,7 +26,18 @@
     <AssemblyVersion>1.0.11</AssemblyVersion>
 
     <Version>$(AssemblyVersion)</Version>
+
+    <PackageProjectUrl>https://github.com/Simon-Miller/InFlux</PackageProjectUrl>
+
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\InFlux\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Influx.CodeGenerators.AutoWireup\Influx.CodeGenerators.AutoWireup.csproj" />

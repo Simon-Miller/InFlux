@@ -24,10 +24,6 @@ Fixed bug found in unsubscribing from QueuedEvents&lt;T&gt; by providing the Act
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="InFlux icon.cdr" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.1" />
   </ItemGroup>
 
