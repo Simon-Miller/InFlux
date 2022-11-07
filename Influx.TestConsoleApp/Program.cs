@@ -20,6 +20,6 @@ partial class Program
 [AutoWireup]
 public partial class testClass
 {
-    int id; // ** all generated code seeded from THIS field, once project builds. **
+    int id; // ** all generated code seeded from THIS field, once project builds. ** 
 }
 

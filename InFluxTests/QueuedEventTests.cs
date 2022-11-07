@@ -300,5 +300,8 @@ namespace InFluxTests
         [Required]
         [RegularExpression("^[A-Za-z-'`]{2,25}$", ErrorMessage ="Name is invalid.  Use letters only. hyphen and apostrophe accepted.")]
         string name;
+
+        [AutoWireupIgnore]
+        int ignoreMe;
     }
 }
