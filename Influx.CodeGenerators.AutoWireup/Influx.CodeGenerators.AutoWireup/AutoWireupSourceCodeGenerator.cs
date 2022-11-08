@@ -180,13 +180,18 @@ namespace Influx.CodeGenerators.AutoWireup
 
         public void Initialize(GeneratorInitializationContext context)
         {
-#if DEBUG
-            if (!Debugger.IsAttached)
-            {
-                Debugger.Launch();
-            }
-#endif
-
+//// REMOVED!!!!  Causes debugger popups in Visual Studio, which annoyingly I didn't get when developing (would have been nice)
+////              But you get it during package release.  I'm going crazy over new releases trying to get the deployed package to look
+////              as it should -- because the source code, build and test etc - are not looking like the deployed package!!!
+////              I've even pulled apart the NuGet package and confirmed the DLL appears to be the right one.  Still getting old behaviours???
+////              I've noticed this re-enabled too.  Not sure how that happened, as I pulled in Git changes which should have remove it
+////              when I committed from my other machine.  *sigh*.  *deep breath*.
+//#if DEBUG
+//            if (!Debugger.IsAttached)
+//            {
+//                Debugger.Launch();
+//            }
+//#endif
             context.RegisterForSyntaxNotifications(() => new MySyntaxReceiver());
         }
     }
