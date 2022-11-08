@@ -304,4 +304,14 @@ namespace InFluxTests
         [AutoWireupIgnore]
         int ignoreMe;
     }
+
+    public partial class testClass
+    {
+        public testClass(bool x)
+        {
+            //this.OnEntityChanged
+        }
+
+        //public Age
+    }
 }

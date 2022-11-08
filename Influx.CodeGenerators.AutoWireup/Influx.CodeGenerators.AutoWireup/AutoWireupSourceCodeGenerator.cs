@@ -99,7 +99,7 @@ namespace Influx.CodeGenerators.AutoWireup
                     sb.Append($"\r\nnamespace {namespaceName} \r\n{{\r\n");
 
                     // render class declaration
-                    sb.Append($"\t{classModifiers.Trim()} class {className}\r\n\t{{\r\n");
+                    sb.Append($"\t{classModifiers.Trim()} class {className} : IAutoWireup\r\n\t{{\r\n");
 
                     // render class constructor declaration
                     sb.Append($"\t\tpublic {className}()\r\n\t\t{{\r\n");
@@ -120,7 +120,7 @@ namespace Influx.CodeGenerators.AutoWireup
                     sb.Append("\t\t}\r\n\r\n");
 
                     // render the OnEntityChanged event.
-                    sb.Append("\t\tpublic readonly QueuedEvent OnEntityChanged = new();\r\n\r\n");
+                    sb.Append("\t\tpublic QueuedEvent OnEntityChanged { get; init; } = new();\r\n\r\n");
 
                     foreach (var field in fields)
                     {
