@@ -15,7 +15,7 @@
 to generate properties and wire up events for you, so you 
 have an entity that raises a generic event when any property
 is set, as well as property specific events.</Description>
-    <PackageTags>Influx Code Generator AutoWireup</PackageTags>
+    <PackageTags>Influx; Code; Generator; AutoWireup; event; property; properties; entity; entities;</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
 
@@ -23,13 +23,21 @@ is set, as well as property specific events.</Description>
 
     <Title>Influx.CodeGenerators.AutoWireup</Title>
 
-    <AssemblyVersion>1.0.11</AssemblyVersion>
+    <AssemblyVersion>1.0.13</AssemblyVersion>
 
     <Version>$(AssemblyVersion)</Version>
 
     <PackageProjectUrl>https://github.com/Simon-Miller/InFlux</PackageProjectUrl>
 
     <PackageIcon>icon.png</PackageIcon>
+
+    <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
+
+    <RepositoryUrl>https://github.com/Simon-Miller/InFlux</RepositoryUrl>
+
+    <PackageReleaseNotes>Usable code generated!  Integrates with Visual Studio as
+a code analyser, where you can view the generated code 
+under Dependencies -&gt; Analyzers -&gt; Influx.CodeGenerators.AutoWireup.AutoWireupSourceCodeGenerator</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -45,6 +53,13 @@ is set, as well as property specific events.</Description>
 
   <ItemGroup>
     <None Update="tools\*.ps1" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ReadMe.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <Target Name="_AddAnalyzersToOutput">

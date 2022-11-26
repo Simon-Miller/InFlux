@@ -19,7 +19,7 @@ One-off subscriptions, and callbacks for completed events are supported.</Descri
 	  <PackageReleaseNotes>Added SimpleQueuedEvent where an event payload only contains new data.
 Fixed bug found in unsubscribing from QueuedEvents&lt;T&gt; by providing the Action subscribed with.</PackageReleaseNotes>
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
-	  <AssemblyVersion>1.6</AssemblyVersion>
+	  <AssemblyVersion>1.7</AssemblyVersion>
 	  <Version>$(AssemblyVersion)</Version>
   </PropertyGroup>
 
