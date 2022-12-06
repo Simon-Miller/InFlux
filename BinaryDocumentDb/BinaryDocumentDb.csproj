@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyVersion>1.0.6</AssemblyVersion>
+    <AssemblyVersion>1.1.0</AssemblyVersion>
     <Version>$(AssemblyVersion)</Version>
     <PackageProjectUrl>https://github.com/Simon-Miller/InFlux</PackageProjectUrl>
     <Description>A low level blob database file, with a repository that acts as an index of available blobs.  
@@ -19,7 +19,8 @@ alterations complete, using the InFlux method of weak referenced events.</Descri
     <PackageIcon>BinaryDocumentDbIcon.png</PackageIcon>
     <RepositoryUrl>https://github.com/Simon-Miller/InFlux</RepositoryUrl>
     <PackageTags>store db file binary document</PackageTags>
-    <PackageReleaseNotes>Can now reserve a key before saving. </PackageReleaseNotes>
+    <PackageReleaseNotes>Added ability to Flush() the underlying stream, but added this to all the code
+that relates to creating, updating, or deleting.  So should not be necessary.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

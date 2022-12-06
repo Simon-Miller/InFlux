@@ -1,5 +1,5 @@
 ﻿// For intergration tests, comment out this #define.
-#define UNIT_TESTS
+//#define UNIT_TESTS
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,7 +16,7 @@ namespace BinaryDocumentDb.IntegrationTests.UnitTestHelpers
             di.AddTransient<IBinaryDocumentDbFactory, FakeIBinaryDocumentDbFactory> ();
 #else
 
-            di.RegisterBinaryDocumentDb();
+            di.RegisterBinaryDocumentDbFactory();
 
 #endif
 

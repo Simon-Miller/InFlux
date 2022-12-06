@@ -108,5 +108,13 @@ namespace BinaryDocumentDb
 
         public ExecResponse<bool> Exists(uint blobKey) =>
             TryCatch.Wrap(() => KeyToOffsetDictionary.ContainsKey(blobKey));     
+
+        public ExecResponse Flush()
+        {
+            return TryCatch.Wrap(() => 
+            {
+                FileOperations.Flush();
+            });
+        }
     }
 }

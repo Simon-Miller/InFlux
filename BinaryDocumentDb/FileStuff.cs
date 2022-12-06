@@ -158,6 +158,8 @@ namespace BinaryDocumentDb
                 writeFreeSpaceEntryToDiskAtCurrentPositionAndListEntry(freeSpacesInFile, (uint)newAvailableSpaceLength);
                 freeSpacesInFile.Remove(availableSpace); // old entry no longer relevant as we created a new one
 
+                this.Flush();
+
                 // for the user.
                 return key;
             }
@@ -171,6 +173,8 @@ namespace BinaryDocumentDb
                 // need to remove the empty entry from list of empty entries. (exactly overwritten on disk)
                 freeSpacesInFile.Remove(availableSpace);
 
+                this.Flush();
+
                 // for the user.
                 return key;
             }
@@ -181,6 +185,8 @@ namespace BinaryDocumentDb
                 fs.Seek(0, SeekOrigin.End);
 
                 var key = writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, blob);
+
+                this.Flush();
 
                 // for the user.
                 return key;
@@ -343,6 +349,14 @@ namespace BinaryDocumentDb
             #endregion
         }
 
+        /// <summary>
+        /// flushes underlying stream to disk.
+        /// </summary>
+        internal void Flush()
+        {
+            this.fs.Flush();
+        }
+
         #region scan file stream
 
         private void importDataFromFileStream(
@@ -442,6 +456,8 @@ namespace BinaryDocumentDb
         {
             fs.Seek(entryOffset, SeekOrigin.Begin);
             writeByte(EMPTY_ENTRY);
+
+            this.Flush();
         }
 
         private void processBlobEntry(Dictionary<uint, uint> keyToPhysicalOffsetInFile)
@@ -753,6 +769,8 @@ namespace BinaryDocumentDb
 
             // blob data:
             fs.Write(blob, 0, blob.Length);
+
+            this.Flush();
         }
 
         private void writeBlobEntryAtCurrentPosition(uint key, byte[] blobData)
@@ -765,6 +783,8 @@ namespace BinaryDocumentDb
             writeUInt(key);
 
             fs.Write(blobData, 0, blobData.Length);
+
+            this.Flush();
         }
 
         /// <summary>
@@ -784,6 +804,8 @@ namespace BinaryDocumentDb
 
             // NOTE: length is the number of bytes of free space AFTER the 'length' entry on disk.
             freeSpacesInFile.Add(new FreeSpaceEntry(position, remainingDataSpace));
+
+            this.Flush();
         }
 
         #endregion
