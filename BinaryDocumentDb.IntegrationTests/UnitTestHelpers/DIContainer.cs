@@ -1,5 +1,5 @@
 ﻿// For intergration tests, comment out this #define.
-//#define UNIT_TESTS
+#define UNIT_TESTS
 
 using Microsoft.Extensions.DependencyInjection;
 
