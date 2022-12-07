@@ -515,6 +515,118 @@
                 { 0, 5,0,0,0,   1, 10,0,0,0, 1,0,0,0, 7,   0, 10,0,0,0,   0, 5,0,0,0}));
         }
 
+        /// <summary>
+        /// This test based on real life discovery of a failing UPDATE!  ARGH!!  How did I miss this??
+        /// </summary>
+        [TestMethod]
+        public void Can_update_blob_with_smaller_by_1_content_creating_an_empty_space_entry()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                        // empty 5 bytes entry
+                1, 15,0,0,0, 1,0,0,0, 1,2,3,4,5,6, // blob entry to delete
+                0, 5,0,0,0,                        // empty 5 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 1, 2, 3, 4, 5 }); // 1 less byte, so creates an empty space.
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(25u, index[1]);
+
+            //// BOOM! Free spaces get defragmented.
+            //Assert.AreEqual(3, freespace.Count); // defrag'd?
+            //Assert.AreEqual(0u, freespace[0].Offset);
+            //Assert.AreEqual(5u, freespace[0].Length);
+            //Assert.AreEqual(5u, freespace[1].Offset);
+            //Assert.AreEqual(15u, freespace[1].Length);
+            //Assert.AreEqual(20u, freespace[2].Offset);
+            //Assert.AreEqual(5u, freespace[2].Length);
+
+            Assert.AreEqual(1, freespace.Count); // defrag'd
+            Assert.AreEqual(0u, freespace[0].Offset);
+            Assert.AreEqual(25u, freespace[0].Length);
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 25,0,0,0,   
+                  0, 15,0,0,0, 1,0,0,0, 1,2,3,4,5,6,  
+                  0, 5,0,0,0,  
+                  1, 14,0,0,0, 1,0,0,0, 1,2,3,4,5 }));
+        }
+
+        [TestMethod]
+        public void Can_update_blob_with_smaller_by_1_content_using_an_empty_space_entry_of_exact_size()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                        // empty 5 bytes entry
+                1, 15,0,0,0, 1,0,0,0, 1,2,3,4,5,6, // blob entry to delete of 15 bytes
+                0, 14,0,0,0, 0,0,0,0, 0,0,0,0,0    // empty 14 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 1, 2, 3, 4, 5 }); // 1 less byte, so creates an empty space.
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(20u, index[1]);
+
+            Assert.AreEqual(1, freespace.Count); // defrag'd?
+            Assert.AreEqual(0u, freespace[0].Offset);
+            Assert.AreEqual(20u, freespace[0].Length);
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 20,0,0,0,   
+                  0, 15,0,0,0, 1,0,0,0, 1,2,3,4,5,6,  
+                  1, 14,0,0,0, 1,0,0,0, 1,2,3,4,5 }));
+        }
+
+        [TestMethod]
+        public void Can_update_blob_with_smaller_by_1_content_using_an_empty_space_entry_of_5_larger_size()
+        {
+            // Arrange
+            var fs = new FakeVirtualFileStream(new byte[]
+            {
+                0, 5,0,0,0,                                // empty 5 bytes entry
+                1, 15,0,0,0, 1,0,0,0, 1,2,3,4,5,6,         // blob entry to delete of 15 bytes
+                0, 19,0,0,0, 0,0,0,0, 0,0,0,0,0,0,0,0,0,0  // empty 20 bytes entry
+            });
+
+            var instance = new FileStuff(fs);
+            var (index, freespace) = instance.ScanFile();
+
+            // Act
+            instance.UpdateBlob(index, freespace, 1, new byte[] { 1, 2, 3, 4, 5 }); // 1 less byte, so creates an empty space.
+
+            // Assert
+            Assert.AreEqual(1, index.Count);
+            Assert.AreEqual(20u, index[1]);
+
+            Assert.AreEqual(2, freespace.Count); // defrag'd?
+            Assert.AreEqual(0u, freespace[0].Offset);
+            Assert.AreEqual(20u, freespace[0].Length);
+            Assert.AreEqual(34u, freespace[1].Offset);
+            Assert.AreEqual(5u, freespace[1].Length);
+
+            Assert.IsTrue(IEnumerableComparer.AreEqual(fs.Data, new byte[]
+                { 0, 20,0,0,0,
+                  0, 15,0,0,0, 1,0,0,0, 1,2,3,4,5,6,
+                  1, 14,0,0,0, 1,0,0,0, 1,2,3,4,5,
+                  0, 5,0,0,0  
+                }));
+        }
+
+
+
         [TestMethod]
         public void Can_update_blob_with_larger_content_into_empty_space_of_exact_same_size()
         {

@@ -252,7 +252,10 @@ namespace BinaryDocumentDb
                 handleExactMatchScenario();
 
             else if (blobData.Length + MINIMUM_BLOB_ENTRY_SIZE + FULL_EMPTY_ENTRY_BYTES_SIZE <= length)
+            {
+
                 handleUpdateAndInsertEmptyEntryScenario(null);
+            }
 
             else if (blobData.Length + MINIMUM_BLOB_ENTRY_SIZE > length)
             {
@@ -262,7 +265,7 @@ namespace BinaryDocumentDb
                 var rawLength = (uint)blobData.Length + MINIMUM_BLOB_ENTRY_SIZE;
                 var availableEntry = findAvailableSpaceInFile(freeSpacesInFile, rawLength);
 
-                if(availableEntry != null)
+                if (availableEntry != null)
                     freeSpacesInFile.Remove(availableEntry);
 
                 if (availableEntry != null && availableEntry.Length == rawLength)
@@ -272,9 +275,49 @@ namespace BinaryDocumentDb
                 }
                 else if (availableEntry != null && availableEntry.Length > rawLength)
                     handleUpdateAndInsertEmptyEntryScenario(availableEntry);
-                
+
                 else
                     handleAddingBlobToEndOfStreamScenario();
+            }
+
+            // saving data is up to 4 bytes smaller than the existing entry, meaning we can't re-use the entry
+            // and need to mark it as empty space whilst adding the entry to available space or end of file.
+            else if ((blobData.Length + MINIMUM_BLOB_ENTRY_SIZE) < length && (blobData.Length + MINIMUM_BLOB_ENTRY_SIZE + FULL_EMPTY_ENTRY_BYTES_SIZE) > length)
+            {
+                var rawLength = (uint)blobData.Length + MINIMUM_BLOB_ENTRY_SIZE;
+                var availableEntry = findAvailableSpaceInFile(freeSpacesInFile, rawLength);
+
+                // three scenarios to consider:
+                // 1.  No available space
+                // 2.  available space of exact size
+                // 3.  Available space at least 5 bytes larger than needed.
+
+                fs.Seek(offset, SeekOrigin.Begin); // in all cases, existing entry needs to turn into empty entry.
+                writeFreeSpaceEntryToDiskAtCurrentPositionAndListEntry(freeSpacesInFile, length);
+
+                if (availableEntry is null)
+                {
+                    // 1. No available space
+                    handleAddingBlobToEndOfStreamScenario();
+                }
+                else
+                {
+                    if (availableEntry.Length == rawLength)
+                    {
+                        // 2. available space of exact size.
+                        offset = availableEntry.Offset;
+                        handleExactMatchScenario();
+
+                        freeSpacesInFile.Remove(availableEntry);
+                    }
+                    else
+                    {
+                        // 3. Available space at least 5 bytes larger than needed.
+                        handleUpdateAndInsertEmptyEntryScenario(availableEntry);
+
+                        freeSpacesInFile.Remove(availableEntry);
+                    }
+                }
             }
 
             // let's ensure our index is clean before returning.
