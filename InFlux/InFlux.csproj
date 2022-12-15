@@ -19,7 +19,7 @@ One-off subscriptions, and callbacks for completed events are supported.</Descri
 	  <PackageReleaseNotes>Added IAutoWireup interface which will be added to generated code.
 See the Influx.CodeGenerators.AutoWireup package for details.</PackageReleaseNotes>
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
-	  <AssemblyVersion>1.7.1</AssemblyVersion>
+	  <AssemblyVersion>1.8.0</AssemblyVersion>
 	  <Version>$(AssemblyVersion)</Version>
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
