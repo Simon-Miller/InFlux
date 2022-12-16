@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>InFlux.T4 Intent drivent Insights code generator</Title>
+    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <Version>$(AssemblyVersion)</Version>
+    <Description>A T4 template code generator that enhances any partial class models
+with additional properties (from fields) that enforces an Intent process
+when changing a value.</Description>
+    <RepositoryUrl>https://github.com/Simon-Miller/InFlux</RepositoryUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
+    <PackageTags>InFlux;T4;Intent;Insights;Code;Generator</PackageTags>
+    <PackageReleaseNotes>A T4 template code generator that uses InFlux to manage intended property changes
+that can be 'resisted' through code, requiring confirmation from a user.  Denial results
+in no property change.  Property changes can also be tracked through generated events.</PackageReleaseNotes>
+    <Company />
+    <Authors>Simon Miller</Authors>
+    <PackageProjectUrl>https://www.nuget.org/packages/InFlux/</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="ModelAdditionalCode.tt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ModelAdditionalCode.tt">
+      <LastGenOutput>ModelAdditionalCode.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </Content>
+    <Content Include="ReadMe.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\InFlux\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ReadMe.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
