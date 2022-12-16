@@ -1,0 +1,319 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#"  #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.RegularExpressions"#>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+/* GENERATED CODE!  DON'T EDIT IT, OR YOU WILL LIKELY LOSE CHANGES IN FUTURE!
+   LAST GENERATED: <#= DateTime.Now #>
+*/
+<#
+	// PLEASE FILL THIS IN:
+	// --------------------
+	var RELATIVE_PATH_FROM_THIS_FILE = @"\TestModels\";
+	// ----------------------------------
+
+
+	var pathToModels = Host.ResolvePath(string.Empty) + RELATIVE_PATH_FROM_THIS_FILE;
+
+	var rxClassModifiersAndName = new Regex(@"([[a-z]* {0,}]*)(?:partial class )([A-Za-z0-9_@]*)", 
+                                        RegexOptions.None, TimeSpan.FromMilliseconds(100));
+
+    // this means you MUST provide an accessibility modifier.
+    var rxFieldTypeAndName = new Regex(@"(?:private|protected internal|protected|internal)\s+([a-z]+\?*)\s{1,}([a-z_@][A-Za-z0-9_@]*)", 
+                                RegexOptions.None, TimeSpan.FromMilliseconds(100));
+
+    var rxAttribute = new Regex(@"(\[[A-Za-z_@][A-Za-z0-9_@]*.*\])", 
+                                RegexOptions.None, TimeSpan.FromMilliseconds(100));
+
+    var rxUsing = new Regex(@"^\s*using ([A-Za-z0-9_.]+);.*$",
+                                RegexOptions.None, TimeSpan.FromMilliseconds(100));
+
+    var rxNamespace = new Regex(@"^\s*namespace\s+([A-Za-z0-9_.]+)\s*\{*$",
+                                RegexOptions.None, TimeSpan.FromMilliseconds(100));
+
+    var currentNamespaceName = "";
+    var currentClassName = "";
+
+    var usings = new List<string>();
+    var namespaces = new Dictionary<string, List<string>>(); // classes in namespaces.
+    var classNames = new List<string>();
+    var classesModifiers = new Dictionary<string, string>();
+    var classesfieldNames = new Dictionary<string, List<string>>();
+    var fieldsTypes = new Dictionary<string, Dictionary<string, string>>();
+    var fieldsAttributes = new Dictionary<string, Dictionary<string, List<string>>>();
+
+    void addToClassesFieldNames(string className, string fieldName)
+    {
+        if(classesfieldNames!.ContainsKey(className))
+            classesfieldNames[className].Add(fieldName);
+        else
+            classesfieldNames.Add(className, new List<string> { fieldName });
+    }
+    void addToFieldsTypes(string className, string fieldName, string fieldType)
+    {
+        if (fieldsTypes!.ContainsKey(className) == false)
+            fieldsTypes.Add(className, new Dictionary<string, string>());
+
+        // unique, so shouldn't ever be updating the dictionary.
+        fieldsTypes[className].Add(fieldName, fieldType);
+    }
+    void addToFieldsAttributes(string className, string fieldName, string attributeName)
+    {
+        if (fieldsAttributes!.ContainsKey(className) == false)
+            fieldsAttributes.Add(className, new Dictionary<string, List<string>>());
+
+        if (fieldsAttributes[className].ContainsKey(fieldName) == false)
+            fieldsAttributes[className].Add(fieldName, new List<string>());
+
+        fieldsAttributes[className][fieldName].Add(attributeName);
+    }
+    void addToUsings(string usingName)
+    {
+        if(usings.Any(x=>x == usingName) == false)
+            usings.Add(usingName);
+    }
+    void addToNamespaces(string namespaceName, string? className = null)
+    {
+        if(namespaces!.ContainsKey(namespaceName) == false)
+            namespaces.Add(namespaceName, new List<string>());
+
+        if(string.IsNullOrWhiteSpace(className) == false)
+            namespaces[namespaceName].Add(className);
+    }
+    List<string> filteredFieldNames(string className)
+            {
+                return classesfieldNames[className].Where(x => 
+                                                        x != "class")
+                                                   .ToList();
+            }
+
+    foreach (var csFile in Directory.EnumerateFiles(pathToModels, "*.cs"))
+    {
+        var csFileText = File.ReadAllLines(csFile);
+
+        for(int i=0; i< csFileText.Length; i++)              
+        {
+            var lineOfCode = csFileText[i];
+
+            try
+            {
+                var usingTextResult = rxUsing.Match(lineOfCode);
+                if(usingTextResult.Success)
+                {
+                    var usingName = usingTextResult.Groups[1].Value;
+                    addToUsings(usingName);
+                }
+
+                var namespaceTextResult = rxNamespace.Match(lineOfCode);
+                if(namespaceTextResult.Success)
+                {
+                    var namespaceName = namespaceTextResult.Groups[1].Value;
+                    addToNamespaces(namespaceName);
+
+                    currentNamespaceName = namespaceName;
+                }
+
+                var classAndModifiersResult = rxClassModifiersAndName.Match(lineOfCode);
+                if(classAndModifiersResult.Success)
+                {
+                    var classModifiers = classAndModifiersResult.Groups[1].Value;
+                    var className = classAndModifiersResult.Groups[2].Value;
+
+                    classNames.Add(className);
+                    classesModifiers.Add(className, classModifiers);
+
+                    currentClassName = className;
+
+                    addToNamespaces(currentNamespaceName, className);
+                }
+
+                var fieldTypeAndNameResult = rxFieldTypeAndName.Match(lineOfCode);
+                if(fieldTypeAndNameResult.Success)
+                {
+                    var fieldType = fieldTypeAndNameResult.Groups[1].Value;
+                    var fieldName = fieldTypeAndNameResult.Groups[2].Value;
+
+                    if (fieldType != "class")
+                    {
+                        addToClassesFieldNames(currentClassName, fieldName);
+                        addToFieldsTypes(currentClassName, fieldName, fieldType);
+
+                        // now we need to look backwards for [attributes]
+                        var lookBackIndex = i - 1;
+                        var more = true;
+                        do
+                        {
+                            var attributeNameResult = rxAttribute.Match(csFileText[lookBackIndex]);
+                            more = attributeNameResult.Success;
+                            if(more)
+                            {
+                                addToFieldsAttributes(currentClassName, fieldName, attributeNameResult.Groups[1].Value);
+                            }
+
+                            lookBackIndex--;
+                        }
+                        while(more);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+        }
+    }
+
+    // At this point we have identified class names, and class accessibility modifiers.
+    // We've identified each class's non-public fields (but can't tell the different with properties) except we expect to start with a lower case letter [a-z_@].
+    // We've also identified each field's attributes
+#>
+
+<#  // can exist as a method that I believe is a utility function to the ONE method that is this code file.
+string UppercaseFirstLetterInText(string text)
+{
+    var builder = new StringBuilder();
+    bool found = false;
+    foreach(char chr in text)
+    {
+        if (found == false && char.IsLetter(chr))
+        {
+            builder.Append(char.ToUpper(chr));
+            found = true;
+        }
+        else
+            builder.Append(chr);
+    }
+
+    return builder.ToString();
+}
+#>
+using InFlux;
+using System.Diagnostics;
+<#
+    foreach(var usingName in usings)
+    { #>
+using <#= usingName #>;
+
+<#  } 
+    foreach(var namespaceName in namespaces.Keys)
+    {
+#>
+namespace <#= namespaceName #>
+{
+<#
+        var classesInNamespace = namespaces[namespaceName];
+
+        foreach(var className in classesInNamespace)
+        {
+            var classModifiers = classesModifiers[className];
+            var fieldNames = classesfieldNames[className];
+#>
+    <#= classModifiers.Trim() #> partial class <#= className #>
+    {
+        public <#= className #>(IntentProcessor intentProcessor)
+        {
+            IntentProcessor = intentProcessor;
+
+            var factory = new InsightsFactory(IntentProcessor);
+
+<#  
+            // CONSTRUCUTOR
+            // ------------
+
+            foreach (var fieldName in filteredFieldNames(className))
+            {
+                var propertyName = UppercaseFirstLetterInText(fieldName);
+#>
+            var <#= fieldName #>Resources = factory.Make(<#= fieldName #>);
+            <#= propertyName #>Insights = <#= fieldName #>Resources.insight;
+            <#= propertyName #>InsightsManager = <#= fieldName #>Resources.manager;
+
+<#               
+            }
+#>
+        }
+
+        public readonly IntentProcessor IntentProcessor;
+
+        public void ResetToPristine()
+        {
+<#
+            foreach (var fieldName in filteredFieldNames(className))
+            {
+                var propertyName = UppercaseFirstLetterInText(fieldName);
+#>
+            <#= propertyName #>Insights.ResetToPristine();
+<#
+            }
+#>
+        }
+
+        public bool ModelTouched => <#
+            var filteredNames = filteredFieldNames(className);
+            for (int i = 0; i < filteredNames.Count; i++)
+            {
+                var propertyName = UppercaseFirstLetterInText(filteredNames[i]);
+                if (i > 0) { #> && <# }
+#>
+<#= propertyName #>Insights.IsTouched<#
+            }
+            #>;
+
+        public bool ModelDirty => <#
+            for (int i = 0; i < filteredNames.Count; i++)
+            {
+                var propertyName = UppercaseFirstLetterInText(filteredNames[i]);
+                if (i > 0) { #> && <# }
+#>
+<#= propertyName #>Insights.IsDirty<#
+            }
+            #>;
+
+<#
+            // PROPERTY
+            // --------
+
+            
+            foreach (var fieldName in fieldNames)
+            {
+                var classFields = fieldsAttributes[className];
+                if (classFields.ContainsKey(fieldName))
+                {
+                    var attributeNames = classFields[fieldName];
+                    var propertyName = UppercaseFirstLetterInText(fieldName);
+                    var fieldType = fieldsTypes[currentClassName][fieldName];
+
+                    if (attributeNames != null)
+                    {
+                        foreach (var attributeName in attributeNames)
+                        {
+#>
+        <#= attributeName #>
+<#
+                        }
+#>
+        public <#= fieldType #> <#= propertyName #> => <#= fieldName #>;
+        public readonly Insights<<#= fieldType #>> <#= propertyName #>Insights;
+        private readonly IOwnInsight <#= propertyName #>InsightsManager;
+
+        [DebuggerStepThrough]
+        public void TrySet<#= propertyName #>(<#= fieldType #> newValue, Action? codeIfAllowed = null, Action? codeIfNotAllowed = null) =>
+            IntentHelper.TrySet<<#= fieldType #>>(IntentProcessor, "<#= className #>", "<#= propertyName #>", () => <#= fieldName #>, x => <#= fieldName #> = x, newValue, 
+                                            <#= propertyName #>Insights, <#= propertyName #>InsightsManager, codeIfAllowed, codeIfNotAllowed);
+<#                        
+                    }
+                }
+            }
+#>
+    }
+<#      } // end of classesInNamespace
+    } // end of namespaces.Keys
+#>
+}
+
+// end of generated code.

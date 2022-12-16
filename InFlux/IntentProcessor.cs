@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace InFlux
 {
@@ -122,6 +123,7 @@ namespace InFlux
         /// <param name="newValue">the new value that should replace the old value, if you're allowed to make that change.</param>
         /// <param name="codeIfAllowed">Code that is called only if you're allowed - which changes the value referred to as the new value.</param>
         /// <param name="callbackIfNotAllowed">Code this is called if you were not allowed to make the intended change.</param>
+        [DebuggerStepThrough]
         public void FireIntent<T>(string callerType, string callerName, T oldValue, T newValue, Action codeIfAllowed, Action callbackIfNotAllowed = null)
         {
             // 1. Identify subscribers for this intent.
@@ -158,6 +160,7 @@ namespace InFlux
             });
         }
 
+        [DebuggerStepThrough]
         private WeakReference<Registration> prepareForSubscription<T>(string callerType, string callerName, Action<Intent<T>> moderatorCode)
         {
             /* I know this seems monsterously complicated, but we have to register against a non-generic collection,
@@ -177,6 +180,7 @@ namespace InFlux
             return new WeakReference<Registration>(reg);
         }
 
+        [DebuggerStepThrough]
         private List<Registration> identifyInterestedModerators(string callerType, string callerName)
         {
             var listeners = new List<Registration>();
@@ -198,6 +202,7 @@ namespace InFlux
             return listeners;
         }
 
+        [DebuggerStepThrough]
         private bool CallModeratorsToDetermineIfWeNeedToAskForPermission(List<Registration> listeners, object oldValue, object newValue)
         {
             var intent = new Intent<object>(oldValue, newValue);
@@ -210,6 +215,50 @@ namespace InFlux
             }
 
             return intent.PermissionNeededForChange;
+        }
+    }
+
+    /// <summary>
+    /// Helper class for generated code (T4 template?)
+    /// </summary>
+    public class IntentHelper
+    {
+        /// <summary>
+        /// A complicated call method that needs to be shared with all generated code classes (T4).
+        /// </summary>
+        [DebuggerStepThrough]
+        public static void TrySet<T>(IntentProcessor intentProcessor, string className, string propertyName, Func<T> valueGetter, Action<T> valueSetter, T newValue, Insights<T> valueInsights, IOwnInsight valueInsightsManager, Action? codeIfAllowed = null, Action? codeIfNotAllowed = null)
+        {
+            var oldValue = valueGetter();
+
+            intentProcessor.FireIntent(className, propertyName, oldValue, newValue,
+                codeIfAllowed: () =>
+                {
+                    valueSetter(newValue);
+                    updateInsighs(valueInsightsManager, newValue);
+                    if (codeIfAllowed != null)
+                        valueInsights.OnValueChanged.SubscribeOnce((O, N) => codeIfAllowed());
+
+                    valueInsights.OnValueChanged.FireEvent(oldValue, newValue);
+                },
+                callbackIfNotAllowed: () =>
+                {
+                    if (codeIfNotAllowed != null)
+                        valueInsights.OnValueUnChanged.SubscribeOnce((O, N) => codeIfNotAllowed());
+
+                    valueInsights.OnValueUnChanged.FireEvent(oldValue, newValue);
+                }
+            );
+        }
+
+        private static void updateInsighs<T>(IOwnInsight insightManager, T newValue)
+        {
+            // untouched?
+            insightManager.SetIsTouched(true);
+
+            // dirty?
+            var newHashValue = newValue?.GetHashCode() ?? 0;
+            insightManager.SetIsDirty(newHashValue != insightManager.OriginalValueHash);
         }
     }
 }
