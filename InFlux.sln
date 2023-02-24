@@ -18,13 +18,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{A9D81A38-7
 		BinaryDocumentDb_README.md = BinaryDocumentDb_README.md
 		README.md = README.md
 		BinaryDocumentDb\ReadMe.md = BinaryDocumentDb\ReadMe.md
+		TODO.md = TODO.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Influx.CodeGenerators.AutoWireup", "Influx.CodeGenerators.AutoWireup\Influx.CodeGenerators.AutoWireup\Influx.CodeGenerators.AutoWireup.csproj", "{4E83BEA4-0253-46CF-8EFC-2245E3996770}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Influx.CodeGenerators.AutoWireup.Package", "Influx.CodeGenerators.AutoWireup\Influx.CodeGenerators.AutoWireup.Package\Influx.CodeGenerators.AutoWireup.Package.csproj", "{00ECD890-5531-455E-A0EF-3F8AE7B25928}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InFlux.T4", "InFlux.T4\InFlux.T4.csproj", "{370444FC-4726-4DC1-85BD-C5B0CF8A20A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InFlux.T4", "InFlux.T4\InFlux.T4.csproj", "{370444FC-4726-4DC1-85BD-C5B0CF8A20A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
