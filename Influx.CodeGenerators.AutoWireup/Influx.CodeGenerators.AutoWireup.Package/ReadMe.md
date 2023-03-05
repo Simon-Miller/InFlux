@@ -11,7 +11,7 @@ public partial class testClass
 ```
 
 The ```AutoWireUp``` attribute, when applied to a class, can generate properties for you.
-That may not sounds very useful, until you understand that when the property values changes,
+That may not sounds very useful, until you understand that when property values change,
 an event is triggered.
 
 That might sound more useful if you're looking for a reactive entity without the boilerplate!
@@ -49,7 +49,7 @@ namespace InFluxTests
 ```
 
 ### GOTCHA!
-Ensure your class is partial.  Otherwise you'll get build errors.
+Ensure your class is **partial**.  Otherwise you'll get build errors.
 
 Every FIELD encountered will have its first letter CAPITALISED as a way of generating
 the name for the property.
@@ -57,13 +57,13 @@ the name for the property.
 #### Attributes
 Thankfully DataAnnotation attributes can be placed on fields too.
 The idea being that you make private fields (lower case) and this will generate public
-properties with an upper-cased first letter.  The attributes are duplicated. 
-The ```set``` code block of the property will check for changes, and fire an event to say so.
-
-The constructor generated will pick up on this, and fire off the generic ```OnEntityChanged```
+properties with an upper-cased first letter.  
+- The attributes are duplicated. 
+- The ```set``` code block of the property will check for changes, and fire an event to say so.
+- The constructor generated will pick up on this, and fire off the generic ```OnEntityChanged```
 event too.  
 
-#### What if I don't won't a property generated?
+#### What if I don't want a property generated?
 
 ```
 [AutoWireupIgnore]
@@ -74,15 +74,15 @@ Need I say more?
 
 ### The BIG picture
 
-In an MVC or Blazor style of application, you make come to depend on DataAnnotations for
+In an MVC or Blazor style of application, you may come to depend on DataAnnotations for
 model validation.  Especially where you use components (Blazor) and point to the property
 being represented.  As such, the data annotations need to be on a simple property.
 We can therefore only hide complexity in the setter of the property.
 
 ### How to access property Events?
 
-Each property generated has a buddy property (insights) named the same as the property but
-with "Insight" appended, such as "IdInsight".
+Each property generated has a buddy property (**insights**) named the same as the property but
+with "**Insight**" appended, such as "**IdInsight**".
 
 This property leverages a special version of the ```QueuedEventProperty``` to provide you
 with methods to subscribe to the ```ValueChanged``` event either once or indefinitely, as
@@ -101,4 +101,4 @@ or via the GitHub project issues:
 https://github.com/Simon-Miller/InFlux/issues
 
 
-**&hyphen; Simon Miller  &hyphen;**
+**&hyphen; Simon Miller &hyphen;**
