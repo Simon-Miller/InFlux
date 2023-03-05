@@ -93,6 +93,11 @@
 
             Position++;
         }
+
+        public void Flush()
+        {
+            // nothing to do.
+        }
     }
 
     [TestClass]

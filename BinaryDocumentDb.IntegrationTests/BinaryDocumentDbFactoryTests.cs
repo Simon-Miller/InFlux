@@ -1,5 +1,6 @@
 using BinaryDocumentDb.IntegrationTests.UnitTestHelpers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BinaryDocumentDb.IntegrationTests
 {
@@ -53,6 +54,45 @@ namespace BinaryDocumentDb.IntegrationTests
 
             // should fail
             var instanceTwo = factory.Make(new BdDbConfig() { FilePathAndName = dbFileName });
+        }
+
+        [TestMethod]
+        public void Write_and_quit_without_proper_shutdown_work()
+        {
+            // Arrange
+            const string dbFileName = "staticTest.db";
+            var factory = DIContainer.DI.GetService<IBinaryDocumentDbFactory>();
+
+            var instance = factory!.Make(new BdDbConfig() { FilePathAndName = dbFileName });
+
+            // Act
+            var key = instance.ReserveNextKey();
+            var data = new byte[] { 1, 2, 3 };
+
+            instance.Create(key.Result, data);
+            var response = instance.Flush();
+           
+            if(true)
+            {
+                // kill the app here, and see if we can read the data in another test?
+
+                // yeah, doesn't save!  ARGH!
+                // So, need to flush the stream?
+            }
+        }
+
+        [TestMethod]
+        public void Write_and_quit_without_proper_shutdown_work_part_2()
+        {
+            // Arrange
+            const string dbFileName = "staticTest.db";
+            var factory = DIContainer.DI.GetService<IBinaryDocumentDbFactory>();
+            var instance = factory!.Make(new BdDbConfig() { FilePathAndName = dbFileName });
+
+            // Act
+            uint key = 1;
+
+            var data = instance.Read(key);
         }
     }
 }

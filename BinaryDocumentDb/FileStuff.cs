@@ -158,6 +158,8 @@ namespace BinaryDocumentDb
                 writeFreeSpaceEntryToDiskAtCurrentPositionAndListEntry(freeSpacesInFile, (uint)newAvailableSpaceLength);
                 freeSpacesInFile.Remove(availableSpace); // old entry no longer relevant as we created a new one
 
+                this.Flush();
+
                 // for the user.
                 return key;
             }
@@ -171,6 +173,8 @@ namespace BinaryDocumentDb
                 // need to remove the empty entry from list of empty entries. (exactly overwritten on disk)
                 freeSpacesInFile.Remove(availableSpace);
 
+                this.Flush();
+
                 // for the user.
                 return key;
             }
@@ -181,6 +185,8 @@ namespace BinaryDocumentDb
                 fs.Seek(0, SeekOrigin.End);
 
                 var key = writeBlobEntryToDiskAtCurrentPositionAndIndexDictionary(keyToPhysicalOffsetInFile, blob);
+
+                this.Flush();
 
                 // for the user.
                 return key;
@@ -246,7 +252,10 @@ namespace BinaryDocumentDb
                 handleExactMatchScenario();
 
             else if (blobData.Length + MINIMUM_BLOB_ENTRY_SIZE + FULL_EMPTY_ENTRY_BYTES_SIZE <= length)
+            {
+
                 handleUpdateAndInsertEmptyEntryScenario(null);
+            }
 
             else if (blobData.Length + MINIMUM_BLOB_ENTRY_SIZE > length)
             {
@@ -256,7 +265,7 @@ namespace BinaryDocumentDb
                 var rawLength = (uint)blobData.Length + MINIMUM_BLOB_ENTRY_SIZE;
                 var availableEntry = findAvailableSpaceInFile(freeSpacesInFile, rawLength);
 
-                if(availableEntry != null)
+                if (availableEntry != null)
                     freeSpacesInFile.Remove(availableEntry);
 
                 if (availableEntry != null && availableEntry.Length == rawLength)
@@ -266,9 +275,49 @@ namespace BinaryDocumentDb
                 }
                 else if (availableEntry != null && availableEntry.Length > rawLength)
                     handleUpdateAndInsertEmptyEntryScenario(availableEntry);
-                
+
                 else
                     handleAddingBlobToEndOfStreamScenario();
+            }
+
+            // saving data is up to 4 bytes smaller than the existing entry, meaning we can't re-use the entry
+            // and need to mark it as empty space whilst adding the entry to available space or end of file.
+            else if ((blobData.Length + MINIMUM_BLOB_ENTRY_SIZE) < length && (blobData.Length + MINIMUM_BLOB_ENTRY_SIZE + FULL_EMPTY_ENTRY_BYTES_SIZE) > length)
+            {
+                var rawLength = (uint)blobData.Length + MINIMUM_BLOB_ENTRY_SIZE;
+                var availableEntry = findAvailableSpaceInFile(freeSpacesInFile, rawLength);
+
+                // three scenarios to consider:
+                // 1.  No available space
+                // 2.  available space of exact size
+                // 3.  Available space at least 5 bytes larger than needed.
+
+                fs.Seek(offset, SeekOrigin.Begin); // in all cases, existing entry needs to turn into empty entry.
+                writeFreeSpaceEntryToDiskAtCurrentPositionAndListEntry(freeSpacesInFile, length);
+
+                if (availableEntry is null)
+                {
+                    // 1. No available space
+                    handleAddingBlobToEndOfStreamScenario();
+                }
+                else
+                {
+                    if (availableEntry.Length == rawLength)
+                    {
+                        // 2. available space of exact size.
+                        offset = availableEntry.Offset;
+                        handleExactMatchScenario();
+
+                        freeSpacesInFile.Remove(availableEntry);
+                    }
+                    else
+                    {
+                        // 3. Available space at least 5 bytes larger than needed.
+                        handleUpdateAndInsertEmptyEntryScenario(availableEntry);
+
+                        freeSpacesInFile.Remove(availableEntry);
+                    }
+                }
             }
 
             // let's ensure our index is clean before returning.
@@ -341,6 +390,14 @@ namespace BinaryDocumentDb
             }
 
             #endregion
+        }
+
+        /// <summary>
+        /// flushes underlying stream to disk.
+        /// </summary>
+        internal void Flush()
+        {
+            this.fs.Flush();
         }
 
         #region scan file stream
@@ -442,6 +499,8 @@ namespace BinaryDocumentDb
         {
             fs.Seek(entryOffset, SeekOrigin.Begin);
             writeByte(EMPTY_ENTRY);
+
+            this.Flush();
         }
 
         private void processBlobEntry(Dictionary<uint, uint> keyToPhysicalOffsetInFile)
@@ -753,6 +812,8 @@ namespace BinaryDocumentDb
 
             // blob data:
             fs.Write(blob, 0, blob.Length);
+
+            this.Flush();
         }
 
         private void writeBlobEntryAtCurrentPosition(uint key, byte[] blobData)
@@ -765,6 +826,8 @@ namespace BinaryDocumentDb
             writeUInt(key);
 
             fs.Write(blobData, 0, blobData.Length);
+
+            this.Flush();
         }
 
         /// <summary>
@@ -784,6 +847,8 @@ namespace BinaryDocumentDb
 
             // NOTE: length is the number of bytes of free space AFTER the 'length' entry on disk.
             freeSpacesInFile.Add(new FreeSpaceEntry(position, remainingDataSpace));
+
+            this.Flush();
         }
 
         #endregion

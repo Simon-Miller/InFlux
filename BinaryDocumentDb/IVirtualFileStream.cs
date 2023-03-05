@@ -15,6 +15,13 @@ namespace BinaryDocumentDb
         void Close();
 
         /// <summary>
+        /// Clears buffers for this stream and causes any buffered data to be written to the file.
+        /// </summary>
+        /// <exception cref="System.IO.IOException" />
+        /// <exception cref="System.ObjectDisposedException" />
+        void Flush();
+
+        /// <summary>
         /// Gets the length in bytes of the stream.
         /// Return a long value representing the length of the stream in bytes.
         /// </summary>

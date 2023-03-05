@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Influx.Indexing", "Influx.I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Influx.Indexing.Tests", "Influx.Indexing.Tests\Influx.Indexing.Tests.csproj", "{BA02E7CC-1B6E-4D53-92CA-0E9A044F2120}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InFlux.T4", "InFlux.T4\InFlux.T4.csproj", "{370444FC-4726-4DC1-85BD-C5B0CF8A20A9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,6 +72,10 @@ Global
 		{BA02E7CC-1B6E-4D53-92CA-0E9A044F2120}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA02E7CC-1B6E-4D53-92CA-0E9A044F2120}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA02E7CC-1B6E-4D53-92CA-0E9A044F2120}.Release|Any CPU.Build.0 = Release|Any CPU
+		{370444FC-4726-4DC1-85BD-C5B0CF8A20A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{370444FC-4726-4DC1-85BD-C5B0CF8A20A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{370444FC-4726-4DC1-85BD-C5B0CF8A20A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{370444FC-4726-4DC1-85BD-C5B0CF8A20A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

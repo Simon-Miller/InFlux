@@ -7,7 +7,7 @@ using static InFlux.QueuedEventHelperExtensions;
 namespace InFlux
 {
     /// <summary>
-    /// represents an Event that has payload data, but does not incluse an OLD value for your consideration, only a NEW value.
+    /// represents an Event that has payload data, but does not include an OLD value for your consideration, only a NEW value.
     /// When <see cref="FireEvent"/> is called, all the subscriber code to be called is added to the central event handling <see cref="QueuedActions"/>.
     /// This enforces the order that events are queued, and thus fired, making for a far more predictable sequence in firing of events.
     /// </summary>
@@ -137,6 +137,7 @@ namespace InFlux
         /// <summary>
         /// returns a filtered collection, but you'll want to consider only keeping weak references to the actions returned.
         /// </summary>
+        [DebuggerStepThrough]
         internal static FilterResult FilterSubscriptions<T>(this Dictionary<int, WeakReference<Action<T>>> subscriptions, Func<Action<T>, Action> codeWrapper)
         {
             var deadSubscriptions = new List<int>();
@@ -160,6 +161,7 @@ namespace InFlux
         /// <summary>
         /// returns a filtered <see cref="List{Action}"/>, but you'll want to consider only keeping weak references to the actions returned.
         /// </summary>
+        [DebuggerStepThrough]
         internal static List<Action> FilterSubscriptions<T>(this List<WeakReference<Action<T>>> subscriptions, Func<Action<T>, Action> codeWrapper)
         {
             var liveSubscriptions = new List<Action>();

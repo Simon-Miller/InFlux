@@ -99,17 +99,9 @@ namespace BinaryDocumentDb.IntegrationTests.UnitTestHelpers
                 Result = fakeKeyToOffset.Keys.Select(x=>x) 
             };
 
-        public ExecResponse<uint> ReserveNextKey()
+        public ExecResponse Flush()
         {
-            return new ExecResponse<uint> { Success = true, Result = nextKey++ };
-        }
-
-        public ExecResponse Create(uint reservedKey, byte[] blobData)
-        {
-            fakeKeyToOffset.Add(reservedKey, reservedKey);
-            blobsByOffset.Add(reservedKey, blobData);
-
-            return new ExecResponse { Success = true };
+            return new ExecResponse { Success= true };
         }
 
         public QueuedEvent<uint> OnCreated { get; private set; } = new QueuedEvent<uint>();

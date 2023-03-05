@@ -65,6 +65,11 @@ namespace BinaryDocumentDb
         ExecResponse Delete(uint key);
 
         /// <summary>
+        /// Flushes the underlying file stream to disk.
+        /// </summary>
+        ExecResponse Flush();
+
+        /// <summary>
         /// Fired when a Blob is created in the underlying repository.
         /// </summary>
         QueuedEvent<uint> OnCreated { get; }
