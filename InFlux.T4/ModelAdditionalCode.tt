@@ -77,7 +77,7 @@
         if(usings.Any(x=>x == usingName) == false)
             usings.Add(usingName);
     }
-    void addToNamespaces(string namespaceName, string? className = null)
+    void addToNamespaces(string namespaceName, string className = null)
     {
         if(namespaces!.ContainsKey(namespaceName) == false)
             namespaces.Add(namespaceName, new List<string>());
@@ -161,7 +161,7 @@
                     }
                 }
             }
-            catch(Exception ex)
+            catch(Exception)
             {
 
             }
@@ -193,7 +193,9 @@ string UppercaseFirstLetterInText(string text)
 }
 #>
 using InFlux;
+using System;
 using System.Diagnostics;
+
 <#
     foreach(var usingName in usings)
     { #>
@@ -281,21 +283,26 @@ namespace <#= namespaceName #>
             
             foreach (var fieldName in fieldNames)
             {
-                var classFields = fieldsAttributes[className];
-                if (classFields.ContainsKey(fieldName))
+                if(fieldsAttributes.ContainsKey(className))
                 {
-                    var attributeNames = classFields[fieldName];
                     var propertyName = UppercaseFirstLetterInText(fieldName);
                     var fieldType = fieldsTypes[currentClassName][fieldName];
 
-                    if (attributeNames != null)
+                    var classFields = fieldsAttributes[className];
+                    if (classFields.ContainsKey(fieldName))
                     {
-                        foreach (var attributeName in attributeNames)
+                        var attributeNames = classFields[fieldName];
+                        
+                        if (attributeNames != null)
                         {
+                            foreach (var attributeName in attributeNames)
+                            {
 #>
         <#= attributeName #>
 <#
+                            }
                         }
+                    }
 #>
         public <#= fieldType #> <#= propertyName #> => <#= fieldName #>;
         public readonly Insights<<#= fieldType #>> <#= propertyName #>Insights;
@@ -305,8 +312,7 @@ namespace <#= namespaceName #>
         public void TrySet<#= propertyName #>(<#= fieldType #> newValue, Action? codeIfAllowed = null, Action? codeIfNotAllowed = null) =>
             IntentHelper.TrySet<<#= fieldType #>>(IntentProcessor, "<#= className #>", "<#= propertyName #>", () => <#= fieldName #>, x => <#= fieldName #> = x, newValue, 
                                             <#= propertyName #>Insights, <#= propertyName #>InsightsManager, codeIfAllowed, codeIfNotAllowed);
-<#                        
-                    }
+<#                                            
                 }
             }
 #>
