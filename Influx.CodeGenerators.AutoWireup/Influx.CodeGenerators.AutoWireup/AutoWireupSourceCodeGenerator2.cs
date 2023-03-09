@@ -60,7 +60,7 @@ namespace Influx.CodeGenerators.AutoWireup
             sb.Append($"\r\nnamespace {namespaceName} \r\n{{\r\n");
 
             // render class declaration
-            sb.Append($"\t{classModifiers.Trim()} class {className} : IAutoWireup\r\n\t{{\r\n");
+            sb.Append($"\t{classModifiers.Trim()} class {className}\r\n\t{{\r\n");
 
             var fields = getAutoWireupFields(wireUp);
             var fieldsAttributes = getFieldsAttributes(fields);
@@ -68,9 +68,20 @@ namespace Influx.CodeGenerators.AutoWireup
             renderConstructor(wireUp, sb, className, fields);
 
             // render the OnEntityChanged event.
-            sb.Append("\t\tpublic QueuedEvent OnEntityChanged { get; init; } = new();\r\n\r\n");
+            sb.Append(@"
+        public readonly IntentProcessor IntentProcessor;
+");
 
-            renderPropertiesWithAttributes(sb, fields, fieldsAttributes);
+            renderResetToPristine(sb, fields);
+            renderModelTouched(sb, fields);
+            renderModelDirty(sb, fields);
+
+            sb.Append(@"
+        // PROPERTY
+        // --------
+");
+
+            renderPropertiesWithAttributes(sb, fields, fieldsAttributes, className);
 
             // render end of class
             sb.Append("\r\n\t}");
@@ -80,6 +91,8 @@ namespace Influx.CodeGenerators.AutoWireup
 
             return sb.ToString();
         }
+
+        
 
         private string getClassName(ClassDeclarationSyntax wireUp) =>
             wireUp.Identifier.Text.Trim();
@@ -125,7 +138,7 @@ namespace Influx.CodeGenerators.AutoWireup
         private void renderUsings(ClassDeclarationSyntax wireUp, StringBuilder sb)
         {
             // render usings
-            sb.Append("using InFlux;\r\n");
+            sb.Append("using System.Diagnostics;\r\n");
 
             var syntaxRoot = getCompilationUnit(wireUp);
             if (syntaxRoot != null)
@@ -190,11 +203,8 @@ namespace Influx.CodeGenerators.AutoWireup
             sb.Append($"\t\tpublic {className}(IntentProcessor intentProcessor)\r\n\t\t{{");
 
             sb.Append(@"
-            IntentProcessor = intentProcessor;
-            var factory = new InsightsFactory(IntentProcessor);
-
-            // CONSTRUCUTOR
-            // ------------");
+            this.IntentProcessor = intentProcessor;
+            var factory = new InsightsFactory(intentProcessor);");
 
             foreach (var field in fields)
             {
@@ -204,23 +214,103 @@ namespace Influx.CodeGenerators.AutoWireup
                     propertyName += "_";
                 var propertyIndirectName = $"{propertyName}Insights";
 
-                sb.Append($@"
-            var ");
+                sb.Append(
+$@"
+            var {fieldName}Resources = factory.Make({fieldName});
+            {propertyName}Insights = {fieldName}Resources.insight;
+            { propertyName}InsightsManager = {fieldName}Resources.manager;
+                ");
 
-
-                sb.Append($"\t\t\t{propertyIndirectName} = new(() => {fieldName}, value => {fieldName} = value);\r\n");
-                sb.Append($"\t\t\t{propertyIndirectName}.ValueChangedNotification.Subscribe(() => OnEntityChanged.FireEvent());\r\n\r\n");
-            }
+            } // end of foreach
 
             // render end of constructor
-            sb.Append("\t\t}\r\n\r\n");
+            sb.Append(
+@"
+        }
+            ");
         }
 
-        
+        private void renderResetToPristine(StringBuilder sb, IEnumerable<FieldDeclarationSyntax> fields)
+        {
+            sb.Append(@"
+        public void ResetToPristine()
+        {
+            ");
 
-        
+            foreach (var field in fields)
+            {
+                var fieldName = field.Declaration.Variables.FirstOrDefault()?.Identifier.Text.Trim();
+                var propertyName = capitaliseFirstLetter(fieldName);
+                if (propertyName == fieldName)
+                    propertyName += "_";
+                var propertyIndirectName = $"{propertyName}Insights";
 
-        private void renderPropertiesWithAttributes(StringBuilder sb, IEnumerable<FieldDeclarationSyntax> fields, Dictionary<string, List<string>> fieldsAttributes)
+                sb.Append($@"{propertyIndirectName}.ResetToPristine();
+            ");
+
+            } // end of foreach
+
+            sb.Append(@"
+        }
+");
+
+        }   // end of renderResetToPristine
+
+        private void renderModelTouched(StringBuilder sb, IEnumerable<FieldDeclarationSyntax> fields)
+        {
+            sb.Append(@"
+        public bool ModelTouched =>
+            ");
+
+            var allFields = fields.ToList();
+            for(int i=0; i< fields.Count(); i++)
+            {
+                var field = allFields[i];
+
+                var fieldName = field.Declaration.Variables.FirstOrDefault()?.Identifier.Text.Trim();
+                var propertyName = capitaliseFirstLetter(fieldName);
+                if (propertyName == fieldName)
+                    propertyName += "_";
+                var propertyIndirectName = $"{propertyName}Insights";
+
+                if (i > 0)
+                    sb.Append(" && ");
+
+                sb.Append($"{propertyIndirectName}.IsTouched");
+            }
+
+            sb.Append(@";
+");
+        } // end of renderModelTouched
+
+        private void renderModelDirty(StringBuilder sb, IEnumerable<FieldDeclarationSyntax> fields)
+        {
+            sb.Append(@"
+        public bool ModelDirty =>
+            ");
+
+            var allFields = fields.ToList();
+            for (int i = 0; i < fields.Count(); i++)
+            {
+                var field = allFields[i];
+
+                var fieldName = field.Declaration.Variables.FirstOrDefault()?.Identifier.Text.Trim();
+                var propertyName = capitaliseFirstLetter(fieldName);
+                if (propertyName == fieldName)
+                    propertyName += "_";
+                var propertyIndirectName = $"{propertyName}Insights";
+
+                if (i > 0)
+                    sb.Append(" && ");
+
+                sb.Append($"{propertyIndirectName}.IsDirty");
+            }
+
+            sb.Append(@";
+");
+        } // end of renderModelTouched
+
+        private void renderPropertiesWithAttributes(StringBuilder sb, IEnumerable<FieldDeclarationSyntax> fields, Dictionary<string, List<string>> fieldsAttributes, string className)
         {
             foreach (var field in fields)
             {
@@ -245,12 +335,21 @@ namespace Influx.CodeGenerators.AutoWireup
                 }
 
                 // render property
-                sb.Append($"\t\tpublic {typeText} {propertyName} {{get => {propertyIndirectName}.Value; set => {propertyIndirectName}.Value = value; }}\r\n");
+                //sb.Append($"\t\tpublic {typeText} {propertyName} {{get => {propertyIndirectName}.Value; set => {propertyIndirectName}.Value = value; }}\r\n");
 
-                // render property indirection accessor
-                sb.Append($"\t\tpublic readonly QueuedEventPropertyIndirect<{typeText}> {propertyIndirectName};\r\n\r\n");
-            }
-        }
+                sb.Append(
+$@"        public {typeText} {propertyName} => {fieldName};
+        public readonly Insights<{typeText}> {propertyName}Insights;
+        private readonly IOwnInsight {propertyName}InsightsManager;
+
+        [DebuggerStepThrough]
+        public void TrySet{propertyName}({typeText} newValue, Action? codeIfAllowed = null, Action? codeIfNotAllowed = null) =>
+            IntentHelper.TrySet<{typeText}>(IntentProcessor, ""{className}"", ""{propertyName}"",  () => {fieldName}, x => {fieldName} = x, newValue,
+                {propertyName}Insights, {propertyName}InsightsManager, codeIfAllowed, codeIfNotAllowed);
+        ");
+
+            } // end of foreach
+        } // end of renderPropertiesWithAttributes
 
         private string capitaliseFirstLetter(string text)
         {

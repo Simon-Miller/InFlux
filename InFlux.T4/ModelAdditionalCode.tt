@@ -192,19 +192,17 @@ string UppercaseFirstLetterInText(string text)
     return builder.ToString();
 }
 #>
-using InFlux;
 using System;
 using System.Diagnostics;
-
 <#
     foreach(var usingName in usings)
     { #>
 using <#= usingName #>;
-
 <#  } 
     foreach(var namespaceName in namespaces.Keys)
     {
 #>
+
 namespace <#= namespaceName #>
 {
 <#
@@ -224,8 +222,8 @@ namespace <#= namespaceName #>
             var factory = new InsightsFactory(IntentProcessor);
 
 <#  
-            // CONSTRUCUTOR
-            // ------------
+            // CONSTRUCTOR
+            // -----------
 
             foreach (var fieldName in filteredFieldNames(className))
             {
