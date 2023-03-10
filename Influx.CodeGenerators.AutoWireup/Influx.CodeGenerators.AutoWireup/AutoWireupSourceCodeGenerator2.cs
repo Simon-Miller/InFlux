@@ -342,7 +342,7 @@ $@"        public {typeText} {propertyName} => {fieldName};
         public readonly Insights<{typeText}> {propertyName}Insights;
         private readonly IOwnInsight {propertyName}InsightsManager;
 
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         public void TrySet{propertyName}({typeText} newValue, Action? codeIfAllowed = null, Action? codeIfNotAllowed = null) =>
             IntentHelper.TrySet<{typeText}>(IntentProcessor, ""{className}"", ""{propertyName}"",  () => {fieldName}, x => {fieldName} = x, newValue,
                 {propertyName}Insights, {propertyName}InsightsManager, codeIfAllowed, codeIfNotAllowed);

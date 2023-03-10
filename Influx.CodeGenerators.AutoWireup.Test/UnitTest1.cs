@@ -22,7 +22,14 @@ namespace Influx.CodeGenerators.AutoWireup.Test
                 callback(true); 
             });
 
+            // above won't be called unless a moderator says permission needs to be asked for.
             var intentProcessor = new IntentProcessor(askUserForPermission);
+            intentProcessor.SubscribeToIntentProcess<int?>(nameof(Testable), nameof(Testable.Value), intent => 
+            {
+                if (intent.NewValue == 123)
+                    intent.AskUserForPermission();
+            });
+
 
             var target = new Testable(intentProcessor);
 
@@ -32,11 +39,6 @@ namespace Influx.CodeGenerators.AutoWireup.Test
             target.ValueInsights.OnValueChanged.Subscribe((O, N) => { informed = true; });
 
             // Act
-
-
-            /* NOTE TO SELF:
-             * Don't think this is right!  I'm thinking we should be asked for permission??
-             */
 
             target.TrySetValue(newValue: 123); // ignoring possibility of executing code based on change in value being allowed.
 
