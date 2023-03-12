@@ -7,7 +7,7 @@ namespace InFlux
     /// <summary>
     /// register as SCOPED.  every intent is user specific (connection / circuit).
     /// <para>
-    /// This is intented (no pub intended. (d'oh!)) to be THE ONE intent processor that you can use throughout
+    /// This is intented (no pun intended. (d'oh!)) to be THE ONE intent processor that you can use throughout
     /// your application.  Given subscriptions have filtering fields, you will only get involved in the intents you wish
     /// to hear about.
     /// Subscriptions are weak references, so shouldn't prevent components being garbage collected.
@@ -123,7 +123,7 @@ namespace InFlux
         /// <param name="newValue">the new value that should replace the old value, if you're allowed to make that change.</param>
         /// <param name="codeIfAllowed">Code that is called only if you're allowed - which changes the value referred to as the new value.</param>
         /// <param name="callbackIfNotAllowed">Code this is called if you were not allowed to make the intended change.</param>
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         public void FireIntent<T>(string callerType, string callerName, T oldValue, T newValue, Action codeIfAllowed, Action callbackIfNotAllowed = null)
         {
             // 1. Identify subscribers for this intent.
@@ -226,7 +226,7 @@ namespace InFlux
         /// <summary>
         /// A complicated call method that needs to be shared with all generated code classes (T4).
         /// </summary>
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         public static void TrySet<T>(IntentProcessor intentProcessor, string className, string propertyName, Func<T> valueGetter, Action<T> valueSetter, T newValue, Insights<T> valueInsights, IOwnInsight valueInsightsManager, Action? codeIfAllowed = null, Action? codeIfNotAllowed = null)
         {
             var oldValue = valueGetter();

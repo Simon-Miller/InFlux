@@ -50,8 +50,8 @@
         /// </summary>
         public (Insights<T> insight, IOwnInsight manager) Make<T>(T startValue)
         {
-            var instance = new Insights<T>(this.intentProcessor, startValue);
-            var manager = new InsightsManager<T>(instance);
+            Insights<T> instance = new Insights<T>(this.intentProcessor, startValue);
+            InsightsManager<T> manager = new InsightsManager<T>(instance);
 
             return (instance, manager);
         }
