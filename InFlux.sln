@@ -27,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Influx.CodeGenerators.AutoW
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InFlux.T4", "InFlux.T4\InFlux.T4.csproj", "{370444FC-4726-4DC1-85BD-C5B0CF8A20A9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Influx.CodeGenerators.AutoWireup.Test", "Influx.CodeGenerators.AutoWireup.Test\Influx.CodeGenerators.AutoWireup.Test.csproj", "{E3A414F9-1B31-4A60-B702-148C14FEFAD4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Influx.CodeGenerators.AutoWireup.Test", "Influx.CodeGenerators.AutoWireup.Test\Influx.CodeGenerators.AutoWireup.Test.csproj", "{E3A414F9-1B31-4A60-B702-148C14FEFAD4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
