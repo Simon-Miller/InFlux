@@ -7,9 +7,55 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Influx.CodeGenerators.AutoWireup
 {
+    [Generator]
+    public class AutoWireupWithIntentIncrementalSourceCodeGenerator : IIncrementalGenerator
+    {
+        public void Initialize(IncrementalGeneratorInitializationContext context)
+        {
+            // looks like we have to identify the types instances that we consider needing source generation.
+            // SO: should do something like the Syntax receiver.
+            var stuffToProcess = context.SyntaxProvider.CreateSyntaxProvider(IsClassNeedingGeneratedCode, ()=>)
+
+            // THEN register the collection (if any?) of objects that need processing with the provided code. (Action)
+            // I'm guessing the compiler is therefore creating collections of collections, and parses the entire source tree,
+            // before running all the generators.  But how and when it works, is not our concern.
+            context.RegisterSourceOutput(,);
+
+        }
+
+        public bool IsClassNeedingGeneratedCode(SyntaxNode syntaxNode, CancellationToken cancellationToken)
+        {
+            if (syntaxNode is ClassDeclarationSyntax cds)
+            {
+                if (cds.AttributeLists
+                        .Select(x => x.Attributes)
+                        .SelectMany(x => x)
+                        .Select(x => x.Name).OfType<IdentifierNameSyntax>()
+                        .Any(x => x.Identifier.ValueText.StartsWith("AutoWireupWithIntent")))
+                {
+                    WireUpsList.Add(cds);
+                }
+
+                // TEMP
+                AttributeNamesConsidered.Clear();
+                var attribs =
+                    cds.AttributeLists.Select(x => x.Attributes)
+                                      .SelectMany(x => x)
+                                      .Select(x => x.Name).OfType<IdentifierNameSyntax>()
+                                      .Select(x => x.Identifier.ValueText);
+                foreach (var attr in attribs)
+                {
+                    if (AttributeNamesConsidered.Contains(attr) == false)
+                        AttributeNamesConsidered.Add(attr);
+                }
+            }
+        }
+    }
+
     [Generator]
     public class AutoWireupWithIntentSourceCodeGenerator : ISourceGenerator
     {

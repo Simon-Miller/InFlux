@@ -1,11 +1,12 @@
 ﻿
 /* GENERATED CODE!  DON'T EDIT IT, OR YOU WILL LIKELY LOSE CHANGES IN FUTURE!
-   LAST GENERATED: 03/13/2023 09:27:47
+   LAST GENERATED: 06/19/2023 10:56:56
 */
 
 using System;
 using System.Diagnostics;
 using InFlux.Attributes;
+using InFlux;
 using System.ComponentModel.DataAnnotations;
 
 namespace InFlux.T4.TestModels
