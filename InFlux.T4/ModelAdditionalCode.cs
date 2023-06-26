@@ -1,6 +1,6 @@
 ﻿
 /* GENERATED CODE!  DON'T EDIT IT, OR YOU WILL LIKELY LOSE CHANGES IN FUTURE!
-   LAST GENERATED: 06/19/2023 10:56:56
+   LAST GENERATED: 06/26/2023 15:24:56
 */
 
 using System;
@@ -37,9 +37,9 @@ namespace InFlux.T4.TestModels
             NameInsights.ResetToPristine();
         }
 
-        public bool ModelTouched => IdInsights.IsTouched && NameInsights.IsTouched;
+        public bool ModelTouched => IdInsights.IsTouched || NameInsights.IsTouched;
 
-        public bool ModelDirty => IdInsights.IsDirty && NameInsights.IsDirty;
+        public bool ModelDirty => IdInsights.IsDirty || NameInsights.IsDirty;
 
         [Required]
         public int Id => id;

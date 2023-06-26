@@ -170,9 +170,12 @@
         }
     }
 
+
     // At this point we have identified class names, and class accessibility modifiers.
-    // We've identified each class's non-public fields (but can't tell the different with properties) except we expect to start with a lower case letter [a-z_@].
+    // We've identified each class's non-public fields (but can't tell the difference with properties) 
+    // - except we expect to start with a lower case letter [a-z_@].
     // We've also identified each field's attributes
+
 #>
 
 <#  // can exist as a method that I believe is a utility function to the ONE method that is this code file.
@@ -260,7 +263,7 @@ namespace <#= namespaceName #>
             for (int i = 0; i < filteredNames.Count; i++)
             {
                 var propertyName = UppercaseFirstLetterInText(filteredNames[i]);
-                if (i > 0) { #> && <# }
+                if (i > 0) { #> || <# }
 #>
 <#= propertyName #>Insights.IsTouched<#
             }
@@ -270,7 +273,7 @@ namespace <#= namespaceName #>
             for (int i = 0; i < filteredNames.Count; i++)
             {
                 var propertyName = UppercaseFirstLetterInText(filteredNames[i]);
-                if (i > 0) { #> && <# }
+                if (i > 0) { #> || <# }
 #>
 <#= propertyName #>Insights.IsDirty<#
             }
