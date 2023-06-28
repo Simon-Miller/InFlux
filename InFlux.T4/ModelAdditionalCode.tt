@@ -218,7 +218,7 @@ namespace <#= namespaceName #>
             var classModifiers = classesModifiers[className];
             var fieldNames = classesfieldNames[className];
 #>
-    <#= classModifiers.Trim() #> partial class <#= className #>
+    <#= classModifiers.Trim() #> partial class <#= className #> : IAutoWireup
     {
         public <#= className #>(IntentProcessor intentProcessor)
         {
@@ -237,7 +237,7 @@ namespace <#= namespaceName #>
             var <#= fieldName #>Resources = factory.Make(<#= fieldName #>);
             <#= propertyName #>Insights = <#= fieldName #>Resources.insight;
             <#= propertyName #>InsightsManager = <#= fieldName #>Resources.manager;
-            <#= propertyName #>Insights.OnValueChanged.Subscribe((O, N) => ModelChanged.FireEvent());
+            <#= propertyName #>Insights.OnValueChanged.Subscribe((O, N) => OnEntityChanged.FireEvent());
 
 <#               
             }
@@ -280,7 +280,7 @@ namespace <#= namespaceName #>
             }
             #>;
 
-        public readonly QueuedEvent ModelChanged = new QueuedEvent();
+        public QueuedEvent OnEntityChanged { get; } = new QueuedEvent();
 
 <#
             // PROPERTY

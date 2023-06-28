@@ -1,6 +1,6 @@
 ﻿
 /* GENERATED CODE!  DON'T EDIT IT, OR YOU WILL LIKELY LOSE CHANGES IN FUTURE!
-   LAST GENERATED: 06/28/2023 15:17:40
+   LAST GENERATED: 06/28/2023 15:31:34
 */
 
 using System;
@@ -11,7 +11,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace InFlux.T4.TestModels
 {
-    public partial class TestClass
+    public partial class TestClass : IAutoWireup
     {
         public TestClass(IntentProcessor intentProcessor)
         {
@@ -22,12 +22,12 @@ namespace InFlux.T4.TestModels
             var idResources = factory.Make(id);
             IdInsights = idResources.insight;
             IdInsightsManager = idResources.manager;
-            IdInsights.OnValueChanged.Subscribe((O, N) => ModelChanged.FireEvent());
+            IdInsights.OnValueChanged.Subscribe((O, N) => OnEntityChanged.FireEvent());
 
             var nameResources = factory.Make(name);
             NameInsights = nameResources.insight;
             NameInsightsManager = nameResources.manager;
-            NameInsights.OnValueChanged.Subscribe((O, N) => ModelChanged.FireEvent());
+            NameInsights.OnValueChanged.Subscribe((O, N) => OnEntityChanged.FireEvent());
 
         }
 
@@ -43,7 +43,7 @@ namespace InFlux.T4.TestModels
 
         public bool ModelDirty => IdInsights.IsDirty || NameInsights.IsDirty;
 
-        public readonly QueuedEvent ModelChanged = new QueuedEvent();
+        public QueuedEvent OnEntityChanged { get; } = new QueuedEvent();
 
         [Required]
         public int Id => id;
