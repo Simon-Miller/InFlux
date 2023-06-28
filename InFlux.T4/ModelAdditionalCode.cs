@@ -1,6 +1,6 @@
 ﻿
 /* GENERATED CODE!  DON'T EDIT IT, OR YOU WILL LIKELY LOSE CHANGES IN FUTURE!
-   LAST GENERATED: 06/26/2023 15:24:56
+   LAST GENERATED: 06/28/2023 15:17:40
 */
 
 using System;
@@ -22,10 +22,12 @@ namespace InFlux.T4.TestModels
             var idResources = factory.Make(id);
             IdInsights = idResources.insight;
             IdInsightsManager = idResources.manager;
+            IdInsights.OnValueChanged.Subscribe((O, N) => ModelChanged.FireEvent());
 
             var nameResources = factory.Make(name);
             NameInsights = nameResources.insight;
             NameInsightsManager = nameResources.manager;
+            NameInsights.OnValueChanged.Subscribe((O, N) => ModelChanged.FireEvent());
 
         }
 
@@ -40,6 +42,8 @@ namespace InFlux.T4.TestModels
         public bool ModelTouched => IdInsights.IsTouched || NameInsights.IsTouched;
 
         public bool ModelDirty => IdInsights.IsDirty || NameInsights.IsDirty;
+
+        public readonly QueuedEvent ModelChanged = new QueuedEvent();
 
         [Required]
         public int Id => id;
