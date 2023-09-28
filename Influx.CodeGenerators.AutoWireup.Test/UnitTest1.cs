@@ -1,4 +1,4 @@
-using InFlux;
+﻿using InFlux;
 using InFlux.Attributes;
 using System.ComponentModel.DataAnnotations;
 
@@ -7,6 +7,22 @@ namespace Influx.CodeGenerators.AutoWireup.Test
     [TestClass]
     public class UnitTest1
     {
+
+        /*
+         * I remember a Roslyn dev commenting in another issue that directly depending on a source generator project only works by 
+           accident, and shouldn't be considered supported. ->
+            ->
+           The recommended development path from Microsoft seems to be:
+
+           Develop source generators via unit test
+           Ship and consume source generators as NuGet packages.
+           Don't directly link to a source generator project, even though this is possible.
+           If the above recommendations are followed, then VS never needs to be restarted.
+
+           That being said, I hope that taking a direct dependency on a source generator project is supported in the future! 🙂 
+           For internal projects, having to package the source generator as a NuGet should be unnecessary 🙂
+         */
+
         [TestMethod]
         public void TestMethod1()
         {
@@ -50,10 +66,11 @@ namespace Influx.CodeGenerators.AutoWireup.Test
     }
 
     // GOTCHA!  don't forget it MUST be partial.
-    [AutoWireup]
+    [AutoWireupWithIntent]
     partial class Testable
     {
         [Required]
         int? value;
+
     }
 }

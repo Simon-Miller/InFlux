@@ -1,16 +1,17 @@
 ﻿
 /* GENERATED CODE!  DON'T EDIT IT, OR YOU WILL LIKELY LOSE CHANGES IN FUTURE!
-   LAST GENERATED: 03/09/2023 07:36:07
+   LAST GENERATED: 06/28/2023 15:31:34
 */
 
 using System;
 using System.Diagnostics;
 using InFlux.Attributes;
+using InFlux;
 using System.ComponentModel.DataAnnotations;
 
 namespace InFlux.T4.TestModels
 {
-    public partial class TestClass
+    public partial class TestClass : IAutoWireup
     {
         public TestClass(IntentProcessor intentProcessor)
         {
@@ -21,10 +22,12 @@ namespace InFlux.T4.TestModels
             var idResources = factory.Make(id);
             IdInsights = idResources.insight;
             IdInsightsManager = idResources.manager;
+            IdInsights.OnValueChanged.Subscribe((O, N) => OnEntityChanged.FireEvent());
 
             var nameResources = factory.Make(name);
             NameInsights = nameResources.insight;
             NameInsightsManager = nameResources.manager;
+            NameInsights.OnValueChanged.Subscribe((O, N) => OnEntityChanged.FireEvent());
 
         }
 
@@ -36,9 +39,11 @@ namespace InFlux.T4.TestModels
             NameInsights.ResetToPristine();
         }
 
-        public bool ModelTouched => IdInsights.IsTouched && NameInsights.IsTouched;
+        public bool ModelTouched => IdInsights.IsTouched || NameInsights.IsTouched;
 
-        public bool ModelDirty => IdInsights.IsDirty && NameInsights.IsDirty;
+        public bool ModelDirty => IdInsights.IsDirty || NameInsights.IsDirty;
+
+        public QueuedEvent OnEntityChanged { get; } = new QueuedEvent();
 
         [Required]
         public int Id => id;

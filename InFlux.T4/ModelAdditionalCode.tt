@@ -24,7 +24,7 @@
                                         RegexOptions.None, TimeSpan.FromMilliseconds(100));
 
     // this means you MUST provide an accessibility modifier.
-    var rxFieldTypeAndName = new Regex(@"(?:private|protected internal|protected|internal)\s+([a-z]+\?*)\s{1,}([a-z_@][A-Za-z0-9_@]*)", 
+    var rxFieldTypeAndName = new Regex(@"(?:private|protected internal|protected|internal)\s+([A-Za-z]+\?*)\s{1,}([a-z_@][A-Za-z0-9_@]*)", 
                                 RegexOptions.None, TimeSpan.FromMilliseconds(100));
 
     var rxAttribute = new Regex(@"(\[[A-Za-z_@][A-Za-z0-9_@]*.*\])", 
@@ -86,11 +86,10 @@
             namespaces[namespaceName].Add(className);
     }
     List<string> filteredFieldNames(string className)
-            {
-                return classesfieldNames[className].Where(x => 
-                                                        x != "class")
-                                                   .ToList();
-            }
+    {
+        return classesfieldNames[className].Where(x => x != "class")
+                                           .ToList();
+    }
 
     foreach (var csFile in Directory.EnumerateFiles(pathToModels, "*.cs"))
     {
@@ -165,12 +164,18 @@
             {
 
             }
+
+            if(usings.Any(x=> x == "InFlux") == false)
+                addToUsings("InFlux");
         }
     }
 
+
     // At this point we have identified class names, and class accessibility modifiers.
-    // We've identified each class's non-public fields (but can't tell the different with properties) except we expect to start with a lower case letter [a-z_@].
+    // We've identified each class's non-public fields (but can't tell the difference with properties) 
+    // - except we expect to start with a lower case letter [a-z_@].
     // We've also identified each field's attributes
+
 #>
 
 <#  // can exist as a method that I believe is a utility function to the ONE method that is this code file.
@@ -213,7 +218,7 @@ namespace <#= namespaceName #>
             var classModifiers = classesModifiers[className];
             var fieldNames = classesfieldNames[className];
 #>
-    <#= classModifiers.Trim() #> partial class <#= className #>
+    <#= classModifiers.Trim() #> partial class <#= className #> : IAutoWireup
     {
         public <#= className #>(IntentProcessor intentProcessor)
         {
@@ -232,6 +237,7 @@ namespace <#= namespaceName #>
             var <#= fieldName #>Resources = factory.Make(<#= fieldName #>);
             <#= propertyName #>Insights = <#= fieldName #>Resources.insight;
             <#= propertyName #>InsightsManager = <#= fieldName #>Resources.manager;
+            <#= propertyName #>Insights.OnValueChanged.Subscribe((O, N) => OnEntityChanged.FireEvent());
 
 <#               
             }
@@ -258,7 +264,7 @@ namespace <#= namespaceName #>
             for (int i = 0; i < filteredNames.Count; i++)
             {
                 var propertyName = UppercaseFirstLetterInText(filteredNames[i]);
-                if (i > 0) { #> && <# }
+                if (i > 0) { #> || <# }
 #>
 <#= propertyName #>Insights.IsTouched<#
             }
@@ -268,11 +274,13 @@ namespace <#= namespaceName #>
             for (int i = 0; i < filteredNames.Count; i++)
             {
                 var propertyName = UppercaseFirstLetterInText(filteredNames[i]);
-                if (i > 0) { #> && <# }
+                if (i > 0) { #> || <# }
 #>
 <#= propertyName #>Insights.IsDirty<#
             }
             #>;
+
+        public QueuedEvent OnEntityChanged { get; } = new QueuedEvent();
 
 <#
             // PROPERTY
@@ -280,12 +288,12 @@ namespace <#= namespaceName #>
 
             
             foreach (var fieldName in fieldNames)
-            {
+            {              
+                var propertyName = UppercaseFirstLetterInText(fieldName);
+                var fieldType = fieldsTypes[className][fieldName];
+
                 if(fieldsAttributes.ContainsKey(className))
                 {
-                    var propertyName = UppercaseFirstLetterInText(fieldName);
-                    var fieldType = fieldsTypes[currentClassName][fieldName];
-
                     var classFields = fieldsAttributes[className];
                     if (classFields.ContainsKey(fieldName))
                     {
@@ -301,6 +309,7 @@ namespace <#= namespaceName #>
                             }
                         }
                     }
+                }
 #>
         public <#= fieldType #> <#= propertyName #> => <#= fieldName #>;
         public readonly Insights<<#= fieldType #>> <#= propertyName #>Insights;
@@ -311,7 +320,7 @@ namespace <#= namespaceName #>
             IntentHelper.TrySet<<#= fieldType #>>(IntentProcessor, "<#= className #>", "<#= propertyName #>", () => <#= fieldName #>, x => <#= fieldName #> = x, newValue, 
                                             <#= propertyName #>Insights, <#= propertyName #>InsightsManager, codeIfAllowed, codeIfNotAllowed);
 <#                                            
-                }
+                
             }
 #>
     }

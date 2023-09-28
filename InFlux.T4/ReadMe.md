@@ -37,3 +37,21 @@ occassionally playing with T4 templates.
 I do like the convenience that the new code generators bring.  
 Perhaps some day?
 
+---
+_(10th March 2023)_
+
+## The Future is now!
+
+With the release of version 1.1 of
+<a href="https://www.nuget.org/packages/Influx.CodeGenerators.AutoWireup">
+    Influx.CodeGenerators.AutoWireup on NuGet</a>
+this T4 template is now the equivalent of a source code generator.
+The **[AutoWireupWithIntent]** attribute from 
+<a href="https://www.nuget.org/packages/InFlux/">InFlux</a>
+is used to trigger automatic code generation as you type code in visual studio.
+So you can see the generated class's properties in intellisense before you've build
+your project.  This is the clear advantage of a source code generator over a T4 template.
+Still, developing the code I think is a lot harder than a T4.
+Is it worth it?  That's up to you to decide.
+
+

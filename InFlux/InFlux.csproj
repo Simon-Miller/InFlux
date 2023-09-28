@@ -20,7 +20,7 @@ One-off subscriptions, and callbacks for completed events are supported.</Descri
 around Intents and the Intend process integrating with properties 
 of models</PackageReleaseNotes>
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
-	  <AssemblyVersion>1.8.4</AssemblyVersion>
+	  <AssemblyVersion>1.8.5</AssemblyVersion>
 	  <Version>$(AssemblyVersion)</Version>
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

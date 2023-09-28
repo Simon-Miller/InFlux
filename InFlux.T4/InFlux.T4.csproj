@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>InFlux.T4 Intent drivent Insights code generator</Title>
-    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <AssemblyVersion>1.0.2</AssemblyVersion>
     <Version>$(AssemblyVersion)</Version>
     <Description>A T4 template code generator that enhances any partial class models
 with additional properties (from fields) that enforces an Intent process

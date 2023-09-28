@@ -4,13 +4,60 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Influx.CodeGenerators.AutoWireup
 {
     [Generator]
-    public class AutoWireupSourceCodeGenerator : ISourceGenerator
+    public class AutoWireupWithIntentIncrementalSourceCodeGenerator : IIncrementalGenerator
+    {
+        public void Initialize(IncrementalGeneratorInitializationContext context)
+        {
+            // looks like we have to identify the types instances that we consider needing source generation.
+            // SO: should do something like the Syntax receiver.
+            var stuffToProcess = context.SyntaxProvider.CreateSyntaxProvider(IsClassNeedingGeneratedCode, ()=>)
+
+            // THEN register the collection (if any?) of objects that need processing with the provided code. (Action)
+            // I'm guessing the compiler is therefore creating collections of collections, and parses the entire source tree,
+            // before running all the generators.  But how and when it works, is not our concern.
+            context.RegisterSourceOutput(,);
+
+        }
+
+        public bool IsClassNeedingGeneratedCode(SyntaxNode syntaxNode, CancellationToken cancellationToken)
+        {
+            if (syntaxNode is ClassDeclarationSyntax cds)
+            {
+                if (cds.AttributeLists
+                        .Select(x => x.Attributes)
+                        .SelectMany(x => x)
+                        .Select(x => x.Name).OfType<IdentifierNameSyntax>()
+                        .Any(x => x.Identifier.ValueText.StartsWith("AutoWireupWithIntent")))
+                {
+                    WireUpsList.Add(cds);
+                }
+
+                // TEMP
+                AttributeNamesConsidered.Clear();
+                var attribs =
+                    cds.AttributeLists.Select(x => x.Attributes)
+                                      .SelectMany(x => x)
+                                      .Select(x => x.Name).OfType<IdentifierNameSyntax>()
+                                      .Select(x => x.Identifier.ValueText);
+                foreach (var attr in attribs)
+                {
+                    if (AttributeNamesConsidered.Contains(attr) == false)
+                        AttributeNamesConsidered.Add(attr);
+                }
+            }
+        }
+    }
+
+    [Generator]
+    public class AutoWireupWithIntentSourceCodeGenerator : ISourceGenerator
     {
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -20,22 +67,28 @@ namespace Influx.CodeGenerators.AutoWireup
             ////              I've even pulled apart the NuGet package and confirmed the DLL appears to be the right one.  Still getting old behaviours???
             ////              I've noticed this re-enabled too.  Not sure how that happened, as I pulled in Git changes which should have remove it
             ////              when I committed from my other machine.  *sigh*.  *deep breath*.
-            //#if DEBUG
-            //            if (!Debugger.IsAttached)
-            //            {
-            //                Debugger.Launch();
-            //            }
-            //#endif
-            context.RegisterForSyntaxNotifications(() => new MySyntaxReceiver());
+#if DEBUG
+            if (!Debugger.IsAttached)
+            {
+                Debugger.Launch();
+            }
+#endif
+            context.RegisterForSyntaxNotifications(() => new AutoWireupWithIntentReceiver());
         }
+
+        // TEMP
+        private List<string> attributeNamesConsidered = null!; 
 
         public void Execute(GeneratorExecutionContext context)
         {
             // Get our SyntaxReceiver back
-            if ((context.SyntaxReceiver is MySyntaxReceiver receiver))
+            if ((context.SyntaxReceiver is AutoWireupWithIntentReceiver receiver))
             {
                 foreach (var wireUp in receiver.WireUpsList)
                 {
+                    // TEMP
+                    attributeNamesConsidered = receiver.AttributeNamesConsidered; // DELETE ME
+
                     var generatedCode = beginWireupOfCodeFile(wireUp);
 
                     context.AddSource($"{wireUp.Identifier.ValueText}.g.cs", SourceText.From(encoding: Encoding.UTF8, text: generatedCode));
@@ -48,6 +101,11 @@ namespace Influx.CodeGenerators.AutoWireup
             var sb = new StringBuilder();
             sb.Append($"// ** AUTO GENERATED CODE: Last generated: {DateTime.Now} **\r\n");
             sb.Append($"// ***********************\r\n\r\n");
+
+            // DELETE ME
+            foreach (string attribute in attributeNamesConsidered)
+                sb.Append($"// {attribute}\r\n");
+
 
             renderUsings(wireUp, sb);
 

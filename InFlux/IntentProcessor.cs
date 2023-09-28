@@ -7,7 +7,7 @@ namespace InFlux
     /// <summary>
     /// register as SCOPED.  every intent is user specific (connection / circuit).
     /// <para>
-    /// This is intented (no pun intended. (d'oh!)) to be THE ONE intent processor that you can use throughout
+    /// This is intended (no pun intended. (d'oh!)) to be THE ONE intent processor that you can use throughout
     /// your application.  Given subscriptions have filtering fields, you will only get involved in the intents you wish
     /// to hear about.
     /// Subscriptions are weak references, so shouldn't prevent components being garbage collected.
