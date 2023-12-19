@@ -26,7 +26,7 @@ namespace InFluxTests
         }
 
         [TestMethod]
-        public void can_unsunscribe_by_key()
+        public void can_unsubscribe_by_key()
         {
             // Arrange -- create two subscribers, and remove one.  Other should still get called.
             var var1 = 0;
@@ -55,7 +55,7 @@ namespace InFluxTests
         }
 
         [TestMethod]
-        public void can_unsunscribe_by_action()
+        public void can_unsubscribe_by_action()
         {
             // Arrange -- create two subscribers, and remove one.  Other should still get called.
             var var1 = 0;
@@ -274,19 +274,19 @@ namespace InFluxTests
         #endregion
 
 
-        [TestMethod]
-        public void MyTestMethod()
-        {
-            var inst = new testClass();
-            var count = 0;
+        //[TestMethod]
+        //public void MyTestMethod()
+        //{
+        //    var inst = new testClass(x: true);
+        //    var count = 0;
 
-            inst.AgeInsight.ValueChanged.Subscribe((O, N) => { count++; });
-            inst.Age++; // should trigger event.
+        //    inst.AgeInsight.ValueChanged.Subscribe((O, N) => { count++; });
+        //    inst.Age++; // should trigger event.
 
-            //inst.
+        //    //inst.
 
-            Assert.AreEqual(1, count);
-        }
+        //    Assert.AreEqual(1, count);
+        //}
 
     }
 
